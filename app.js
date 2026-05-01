@@ -106,6 +106,7 @@ const state = {
   expandedHistoryIndex: 2,
   viewingMode: savedViewingMode === "dark" ? "dark" : "light",
   activeIdentityKey: "maria-teresa",
+  identityTrail: [],
   aliasesExpanded: false,
   attachments: [],
   undoSnapshot: null,
@@ -426,6 +427,354 @@ const identityProfiles = {
   },
 };
 
+function relatedIdentityProfile(options) {
+  const {
+    key,
+    first,
+    middle = "",
+    last,
+    fullName,
+    photo = portraitAssets.applicant,
+    aNumber,
+    fin,
+    coa = "REL",
+    status = "Verified relationship",
+    dob = "July 8, 1988",
+    address = "Address on linked record",
+    aliases = [],
+    cob = "United States",
+    poe = "Miami International (MIA)",
+    ssn = "On file",
+    coc = cob,
+    doe = "Not applicable",
+    passport = "On file",
+    gender = "Not specified",
+    dfo = "Not applicable",
+    fbi = "On file",
+    parents = [],
+    spouse = "No spouse recorded",
+    attorney = "No attorney recorded",
+    children = [],
+    siteCode = "R214",
+  } = options;
+  const givenName = [first, middle].filter(Boolean).join(" ").toUpperCase();
+  return {
+    key,
+    label: "Linked person identity",
+    first,
+    middle,
+    last,
+    fullName,
+    photo,
+    aNumber,
+    fin,
+    finRaw: fin.replaceAll("-", ""),
+    coa,
+    status,
+    dob,
+    address,
+    aliases: aliases.length ? aliases : [fullName],
+    biographic: { cob, poe, ssn, coc, doe, passport, gender, dfo, fbi },
+    relationships: { parents, spouse, attorney, children },
+    card: {
+      greenStatus: "READY",
+      greenExpires: "TBD",
+      siteCode,
+      eadStatus: "NOT REQUESTED",
+      eadExpires: "TBD",
+      provision: "N/A",
+      receipt: `${siteCode}${aNumber.slice(-4)}0001`,
+    },
+    photoMeta: { dateTaken: dfo, receipt: `${siteCode}${aNumber.slice(-4)}0001`, reason: "Linked person record" },
+    draft: {
+      surname: last.toUpperCase(),
+      givenName,
+      category: coa,
+      country: cob.toUpperCase(),
+      birth: dob.replace(",", "").toUpperCase(),
+      mrz: `GRC<${last.replaceAll(" ", "<").toUpperCase()}<<${givenName.replaceAll(" ", "<")}<<<<<<<<<<<<`,
+    },
+  };
+}
+
+Object.assign(identityProfiles, {
+  "gloria-arroyo-garcia": relatedIdentityProfile({
+    key: "gloria-arroyo-garcia",
+    first: "Gloria",
+    last: "Arroyo García",
+    fullName: "Gloria Arroyo García",
+    photo: "assets/photo-thumb-05.png",
+    aNumber: "A110004812",
+    fin: "4410-62-1184",
+    coa: "K2",
+    status: "Derivative child",
+    dob: "April 18, 1999",
+    address: "1328 Coral Way, Miami, FL 33135",
+    aliases: ["Gloria Arroyo", "Gloria A. García"],
+    cob: "Ecuador",
+    ssn: "188-44-9011",
+    passport: "EC9021844",
+    gender: "Female",
+    dfo: "March 15, 2019",
+    parents: ["Maria Teresa GARCÍA RAMÍREZ", "Julio Arroyo"],
+  }),
+  "mario-arroyo-garcia": relatedIdentityProfile({
+    key: "mario-arroyo-garcia",
+    first: "Mario",
+    last: "Arroyo García",
+    fullName: "Mario Arroyo García",
+    photo: "assets/photo-thumb-06.png",
+    aNumber: "A110004813",
+    fin: "4410-62-1185",
+    coa: "K2",
+    status: "Derivative child",
+    dob: "October 2, 2002",
+    address: "1328 Coral Way, Miami, FL 33135",
+    aliases: ["Mario Arroyo", "Mario A. García"],
+    cob: "Ecuador",
+    ssn: "188-44-9012",
+    passport: "EC9021845",
+    gender: "Male",
+    dfo: "March 15, 2019",
+    parents: ["Maria Teresa GARCÍA RAMÍREZ", "Julio Arroyo"],
+  }),
+  "julio-arroyo": relatedIdentityProfile({
+    key: "julio-arroyo",
+    first: "Julio",
+    last: "Arroyo",
+    fullName: "Julio Arroyo",
+    photo: "assets/photo-thumb-07.png",
+    aNumber: "A100045912",
+    fin: "4150-20-7741",
+    coa: "IR6",
+    status: "LPR Active",
+    dob: "September 22, 1961",
+    address: "1328 Coral Way, Miami, FL 33135",
+    aliases: ["Julio A. Arroyo"],
+    cob: "Ecuador",
+    ssn: "224-19-6014",
+    passport: "EC6612914",
+    gender: "Male",
+    dfo: "June 12, 2012",
+    spouse: "Maria Teresa GARCÍA RAMÍREZ",
+    children: ["Gloria Arroyo García", "Mario Arroyo García"],
+  }),
+  "hunter-fox": relatedIdentityProfile({
+    key: "hunter-fox",
+    first: "Hunter",
+    last: "Fox",
+    fullName: "Hunter Fox",
+    photo: "assets/photo-thumb-08.png",
+    aNumber: "REP-004182",
+    fin: "N/A",
+    coa: "G-28",
+    status: "Attorney of record",
+    dob: "January 12, 1975",
+    address: "44 Biscayne Blvd, Miami, FL 33132",
+    aliases: ["H. Fox", "Hunter R. Fox"],
+    cob: "United States",
+    ssn: "Representative record",
+    passport: "N/A",
+    gender: "Male",
+    dfo: "April 19, 2019",
+  }),
+  "mia-ramirez": relatedIdentityProfile({
+    key: "mia-ramirez",
+    first: "Mia",
+    last: "Ramírez",
+    fullName: "Mia Ramírez",
+    photo: "assets/photo-thumb-05.png",
+    aNumber: "A090018271",
+    fin: "3301-18-2710",
+    status: "Parent record",
+    dob: "June 5, 1938",
+    aliases: ["MIA RAMÍREZ"],
+    cob: "Ecuador",
+    gender: "Female",
+    children: ["Maria Teresa GARCÍA RAMÍREZ"],
+  }),
+  "jose-garcia": relatedIdentityProfile({
+    key: "jose-garcia",
+    first: "Jose",
+    last: "García",
+    fullName: "Jose García",
+    photo: "assets/photo-thumb-06.png",
+    aNumber: "A090018272",
+    fin: "3301-18-2720",
+    status: "Parent record",
+    dob: "February 11, 1935",
+    aliases: ["Jose GARCÍA"],
+    cob: "Ecuador",
+    gender: "Male",
+    children: ["Maria Teresa GARCÍA RAMÍREZ"],
+  }),
+  "melissa-grant": relatedIdentityProfile({
+    key: "melissa-grant",
+    first: "Melissa",
+    last: "Grant",
+    fullName: "Melissa Grant",
+    photo: "assets/photo-thumb-08.png",
+    aNumber: "REP-006294",
+    fin: "N/A",
+    coa: "G-28",
+    status: "Attorney of record",
+    dob: "May 19, 1980",
+    address: "201 S Miami Ave, Miami, FL 33130",
+  }),
+  "mateo-garcia": relatedIdentityProfile({
+    key: "mateo-garcia",
+    first: "Mateo",
+    last: "García",
+    fullName: "Mateo García",
+    photo: "assets/photo-thumb-06.png",
+    aNumber: "A111014446",
+    fin: "4411-14-4461",
+    status: "Child record",
+    dob: "August 7, 2007",
+    cob: "Ecuador",
+    gender: "Male",
+    parents: ["Julia GARCÍA RAMÍREZ"],
+  }),
+  "lucia-garcia": relatedIdentityProfile({
+    key: "lucia-garcia",
+    first: "Lucia",
+    last: "García",
+    fullName: "Lucia García",
+    photo: "assets/photo-thumb-05.png",
+    aNumber: "A111014447",
+    fin: "4411-14-4471",
+    status: "Child record",
+    dob: "December 1, 2010",
+    cob: "Ecuador",
+    gender: "Female",
+    parents: ["Julia GARCÍA RAMÍREZ"],
+  }),
+  "nadia-coleman": relatedIdentityProfile({
+    key: "nadia-coleman",
+    first: "Nadia",
+    last: "Coleman",
+    fullName: "Nadia Coleman",
+    photo: "assets/photo-thumb-08.png",
+    aNumber: "REP-008113",
+    fin: "N/A",
+    coa: "G-28",
+    status: "Attorney of record",
+    dob: "March 2, 1978",
+    address: "18 Court Street, Buffalo, NY 14202",
+  }),
+  "ravi-mehta": relatedIdentityProfile({
+    key: "ravi-mehta",
+    first: "Ravi",
+    last: "Mehta",
+    fullName: "Ravi Mehta",
+    photo: "assets/photo-thumb-08.png",
+    aNumber: "REP-003771",
+    fin: "N/A",
+    coa: "G-28",
+    status: "Attorney of record",
+    dob: "November 13, 1972",
+    address: "33-02 Broadway, Queens, NY 11106",
+  }),
+  "sofia-garcia": relatedIdentityProfile({
+    key: "sofia-garcia",
+    first: "Sofia",
+    last: "García",
+    fullName: "Sofia García",
+    photo: "assets/photo-thumb-05.png",
+    aNumber: "A112023667",
+    fin: "4412-23-6671",
+    status: "Child record",
+    dob: "February 14, 2008",
+    cob: "Ecuador",
+    gender: "Female",
+    parents: ["Maria GARCÍA RAMÍREZ"],
+  }),
+  "julia-ramirez-parent": relatedIdentityProfile({
+    key: "julia-ramirez-parent",
+    first: "Julia",
+    last: "Ramírez",
+    fullName: "Julia Ramírez",
+    photo: "assets/photo-thumb-05.png",
+    aNumber: "A090014446",
+    fin: "3301-14-4460",
+    status: "Parent record",
+    dob: "January 6, 1940",
+    cob: "Ecuador",
+    gender: "Female",
+    children: ["Julia GARCÍA RAMÍREZ"],
+  }),
+  "pablo-garcia-moncayo": relatedIdentityProfile({
+    key: "pablo-garcia-moncayo",
+    first: "Pablo",
+    last: "García Moncayo",
+    fullName: "Pablo García Moncayo",
+    photo: "assets/photo-thumb-07.png",
+    aNumber: "A090014447",
+    fin: "3301-14-4470",
+    status: "Parent record",
+    dob: "May 30, 1936",
+    cob: "Ecuador",
+    gender: "Male",
+    children: ["Julia GARCÍA RAMÍREZ"],
+  }),
+  "andy-gunnarson": relatedIdentityProfile({
+    key: "andy-gunnarson",
+    first: "Andy",
+    last: "Gunnarson",
+    fullName: "Andy Gunnarson",
+    photo: "assets/photo-thumb-07.png",
+    aNumber: "A090001234",
+    fin: "3301-01-2341",
+    status: "Parent record",
+    dob: "July 20, 1944",
+    cob: "Canada",
+    gender: "Male",
+    children: ["Victoria GUNNARSON"],
+  }),
+  "rosemary-miles": relatedIdentityProfile({
+    key: "rosemary-miles",
+    first: "Rosemary",
+    last: "Miles",
+    fullName: "Rosemary Miles",
+    photo: "assets/photo-thumb-05.png",
+    aNumber: "A090001235",
+    fin: "3301-01-2351",
+    status: "Parent record",
+    dob: "October 14, 1948",
+    cob: "Canada",
+    gender: "Female",
+    children: ["Victoria GUNNARSON"],
+  }),
+  "josephina-ramirez": relatedIdentityProfile({
+    key: "josephina-ramirez",
+    first: "Josephina",
+    last: "Ramírez",
+    fullName: "Josephina Ramírez",
+    photo: "assets/photo-thumb-05.png",
+    aNumber: "A090023667",
+    fin: "3301-23-6671",
+    status: "Parent record",
+    dob: "March 27, 1939",
+    cob: "Ecuador",
+    gender: "Female",
+    children: ["Maria GARCÍA RAMÍREZ"],
+  }),
+  "jorge-garcia": relatedIdentityProfile({
+    key: "jorge-garcia",
+    first: "Jorge",
+    last: "García",
+    fullName: "Jorge García",
+    photo: "assets/photo-thumb-07.png",
+    aNumber: "A090023668",
+    fin: "3301-23-6681",
+    status: "Parent record",
+    dob: "August 9, 1937",
+    cob: "Ecuador",
+    gender: "Male",
+    children: ["Maria GARCÍA RAMÍREZ"],
+  }),
+});
+
 const backgroundRows = [
   { year: "2019", type: "PERMANENT RESIDENCE", title: "I-485", status: "PENDING", dateLabel: "RECEIVED", date: "April 19, 2019", accent: "orange" },
   { year: "2019", type: "ASC APPOINTMENT", title: "Fort Lauderdale ASC", status: "COMPLETED", dateLabel: "TRANSACTION DATE", date: "April 19, 2019", accent: "blue" },
@@ -575,8 +924,9 @@ function currentIdentityProfile() {
   return identityProfiles[state.activeIdentityKey] || identityProfiles["maria-teresa"];
 }
 
-function openIdentity(key = "maria-teresa") {
+function openIdentity(key = "maria-teresa", options = {}) {
   state.activeIdentityKey = identityProfiles[key] ? key : "maria-teresa";
+  state.identityTrail = options.trail || [];
   state.aliasesExpanded = false;
   state.modal = null;
   setView("identity", identityHash(state.activeIdentityKey));
@@ -584,13 +934,43 @@ function openIdentity(key = "maria-teresa") {
 }
 
 function openIdentityFromButton(button) {
-  openIdentity(button.dataset.identityKey || "maria-teresa");
+  openIdentity(button.dataset.identityKey || "maria-teresa", { trail: [] });
 }
 
-function linkedIdentityItems(items = [], fallback = "Not recorded") {
+function openRelatedIdentityFromButton(button) {
+  const targetKey = button.dataset.identityKey || "maria-teresa";
+  const parentKey = button.dataset.parentIdentityKey || state.activeIdentityKey;
+  const baseTrail = state.view === "identity" ? state.identityTrail : [];
+  const trail = parentKey && parentKey !== targetKey ? [...baseTrail, parentKey] : baseTrail;
+  openIdentity(targetKey, { trail });
+}
+
+function openBreadcrumbIdentityFromButton(button) {
+  const targetKey = button.dataset.identityKey || "maria-teresa";
+  const index = Number(button.dataset.trailIndex);
+  const trail = Number.isFinite(index) ? state.identityTrail.slice(0, index) : [];
+  openIdentity(targetKey, { trail });
+}
+
+function linkedIdentityItems(items = [], fallback = "Not recorded", options = {}) {
   const usableItems = items.filter((item) => item && !String(item).startsWith("No "));
   if (!usableItems.length) return `<div class="empty-value">${fallback}</div>`;
-  return usableItems.map((item) => ghostButton(item, { className: "stacked-link" })).join("");
+  const parentKey = options.parentKey || state.activeIdentityKey;
+  return usableItems
+    .map((item) => {
+      const targetKey = profileKeyForPersonName(item);
+      if (!targetKey) return ghostButton(item, { className: "stacked-link" });
+      return ghostButton(item, {
+        action: "open-related-identity",
+        className: "stacked-link",
+        iconName: "account_circle",
+        attrs: {
+          "data-identity-key": targetKey,
+          "data-parent-identity-key": parentKey,
+        },
+      });
+    })
+    .join("");
 }
 
 function getSelectedIds() {
@@ -622,6 +1002,26 @@ function normalized(value = "") {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+}
+
+const relationshipIdentityAliases = {
+  [normalized("MIA RAMÍREZ")]: "mia-ramirez",
+  [normalized("Jose GARCÍA")]: "jose-garcia",
+  [normalized("Julia RAMÍREZ")]: "julia-ramirez-parent",
+  [normalized("Pablo GARCÍA MONCAYO")]: "pablo-garcia-moncayo",
+  [normalized("Andy GUNNARSON")]: "andy-gunnarson",
+  [normalized("Rosemary MILES")]: "rosemary-miles",
+  [normalized("Josephina RAMÍREZ")]: "josephina-ramirez",
+  [normalized("Jorge GARCÍA")]: "jorge-garcia",
+};
+
+function profileKeyForPersonName(name = "") {
+  const normalizedName = normalized(name);
+  if (relationshipIdentityAliases[normalizedName]) return relationshipIdentityAliases[normalizedName];
+  const match = Object.values(identityProfiles).find(
+    (profile) => normalized(profile.fullName) === normalizedName || (profile.aliases || []).some((alias) => normalized(alias) === normalizedName),
+  );
+  return match?.key || "";
 }
 
 function candidateMatchLabels(candidate) {
@@ -827,6 +1227,7 @@ function renderQueue() {
 
 function candidateRow(candidate, index, expanded = false) {
   const isSelected = isCandidateSelected(candidate);
+  const profile = identityProfiles[candidate.identityKey] || {};
   return `
     <div class="candidate-row">
       <div class="check-wrap">
@@ -862,13 +1263,15 @@ function candidateRow(candidate, index, expanded = false) {
             <div class="relationship-grid">
               <div>
                 <div class="label">CHILDREN</div>
-                <div class="copy">${candidate.children
-                  .map((child) => ghostButton(child))
-                  .join("<br />")}</div>
+                <div class="copy">${linkedIdentityItems(candidate.children || [], "No children recorded", { parentKey: candidate.identityKey })}</div>
               </div>
               <div>
                 <div class="label">SPOUSE</div>
-                <div class="copy">${ghostButton(candidate.spouse)}</div>
+                <div class="copy">${linkedIdentityItems([candidate.spouse], "No spouse recorded", { parentKey: candidate.identityKey })}</div>
+              </div>
+              <div>
+                <div class="label">ATTORNEY</div>
+                <div class="copy">${linkedIdentityItems([profile.relationships?.attorney], "No attorney recorded", { parentKey: candidate.identityKey })}</div>
               </div>
             </div>
             <div class="detail-grid">
@@ -1036,12 +1439,22 @@ function bindQueueEvents() {
   document.querySelectorAll("[data-action='open-identity']").forEach((button) => {
     button.addEventListener("click", () => openIdentityFromButton(button));
   });
+  bindIdentityNavigationEvents();
   document.querySelector("[data-action='open-ead']")?.addEventListener("click", () => {
     state.activeIdentityKey = candidates[0].identityKey;
     state.modal = "ead";
     renderQueue();
   });
   bindModalEvents();
+}
+
+function bindIdentityNavigationEvents() {
+  document.querySelectorAll("[data-action='open-related-identity']").forEach((button) => {
+    button.addEventListener("click", () => openRelatedIdentityFromButton(button));
+  });
+  document.querySelectorAll("[data-action='open-breadcrumb-identity']").forEach((button) => {
+    button.addEventListener("click", () => openBreadcrumbIdentityFromButton(button));
+  });
 }
 
 function renderResolve(options = {}) {
@@ -1307,7 +1720,36 @@ function bindResolveEvents() {
   document.querySelectorAll("[data-action='open-identity']").forEach((button) => {
     button.addEventListener("click", () => openIdentityFromButton(button));
   });
+  bindIdentityNavigationEvents();
   bindModalEvents();
+}
+
+function identityBreadcrumb(profile) {
+  const trail = state.identityTrail.filter((key) => identityProfiles[key] && key !== profile.key);
+  const trailItems = trail
+    .map((key, index) => {
+      const trailProfile = identityProfiles[key];
+      return `
+        <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+        ${ghostButton(trailProfile.fullName, {
+          action: "open-breadcrumb-identity",
+          className: "breadcrumb-link",
+          attrs: {
+            "data-identity-key": key,
+            "data-trail-index": index,
+          },
+        })}
+      `;
+    })
+    .join("");
+  return `
+    <nav class="mod-breadcrumb" aria-label="Breadcrumb">
+      ${ghostButton("Identity Resolution Queue", { action: "return-queue", className: "breadcrumb-link" })}
+      ${trailItems}
+      <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+      <span>${profile.fullName}</span>
+    </nav>
+  `;
 }
 
 function renderIdentityDetail() {
@@ -1317,11 +1759,7 @@ function renderIdentityDetail() {
   const visibleAliases = state.aliasesExpanded ? profile.aliases : profile.aliases.slice(0, 3);
   const hiddenAliasCount = profile.aliases.length - visibleAliases.length;
   const content = `
-    <nav class="mod-breadcrumb" aria-label="Breadcrumb">
-      ${ghostButton("Identity Resolution Queue", { action: "return-queue", className: "breadcrumb-link" })}
-      <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
-      <span>${profile.fullName}</span>
-    </nav>
+    ${identityBreadcrumb(profile)}
     <main class="identity-detail-page">
       <section class="identity-detail-grid identity-dossier">
         <aside class="identity-side">
@@ -1345,7 +1783,7 @@ function renderIdentityDetail() {
           </div>
         </aside>
         <section class="identity-main">
-          <div class="dossier-kicker">Applicant identity record</div>
+          <div class="dossier-kicker">${profile.label === "Linked person identity" ? "Linked person record" : "Applicant identity record"}</div>
           <div class="name-grid">
             ${identityNameField("FIRST", profile.first)}
             ${identityNameField("MIDDLE", profile.middle || "—")}
@@ -1403,7 +1841,7 @@ function renderIdentityDetail() {
               </div>
               <div>
                 <div class="label">ATTORNEY</div>
-                <div>${profile.relationships.attorney}</div>
+                ${linkedIdentityItems([profile.relationships.attorney], "No attorney recorded")}
                 ${ghostButton("See previous", { className: "stacked-link" })}
               </div>
               <div>
@@ -1676,6 +2114,7 @@ function bindIdentityEvents() {
     state.modal = "ead";
     renderIdentityDetail();
   });
+  bindIdentityNavigationEvents();
   bindModalEvents();
 }
 
@@ -2081,6 +2520,7 @@ function hydrateFromHash() {
   if (identityRoute) {
     state.view = "identity";
     state.activeIdentityKey = identityRoute.key;
+    state.identityTrail = [];
     if (identityRoute.dark) state.viewingMode = "dark";
   }
   if (hash === "#photo" || hash === "#green-card" || hash === "#ead") {
