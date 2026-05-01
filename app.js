@@ -107,6 +107,7 @@ const state = {
   viewingMode: savedViewingMode === "dark" ? "dark" : "light",
   activeIdentityKey: "maria-teresa",
   identityTrail: [],
+  identityReturnContext: null,
   aliasesExpanded: false,
   activeHistoryFilters: null,
   attachments: [],
@@ -1021,6 +1022,8 @@ function currentIdentityProfile() {
 function openIdentity(key = "maria-teresa", options = {}) {
   state.activeIdentityKey = identityProfiles[key] ? key : "maria-teresa";
   state.identityTrail = options.trail || [];
+  state.identityReturnContext =
+    options.returnContext !== undefined ? options.returnContext : state.view === "identity" ? state.identityReturnContext : null;
   state.aliasesExpanded = false;
   state.modal = null;
   setView("identity", identityHash(state.activeIdentityKey));
@@ -1028,7 +1031,14 @@ function openIdentity(key = "maria-teresa", options = {}) {
 }
 
 function openIdentityFromButton(button) {
-  openIdentity(button.dataset.identityKey || "maria-teresa", { trail: [] });
+  const returnContext =
+    state.view === "resolve"
+      ? {
+          view: "resolve",
+          scrollY: window.scrollY,
+        }
+      : null;
+  openIdentity(button.dataset.identityKey || "maria-teresa", { trail: [], returnContext });
 }
 
 function openRelatedIdentityFromButton(button) {
@@ -1820,6 +1830,7 @@ function bindResolveEvents() {
 
 function identityBreadcrumb(profile) {
   const trail = state.identityTrail.filter((key) => identityProfiles[key] && key !== profile.key);
+  const fromResolve = state.identityReturnContext?.view === "resolve";
   const trailItems = trail
     .map((key, index) => {
       const trailProfile = identityProfiles[key];
@@ -1838,7 +1849,7 @@ function identityBreadcrumb(profile) {
     .join("");
   return `
     <nav class="mod-breadcrumb" aria-label="Breadcrumb">
-      ${ghostButton("Identity Resolution Queue", { action: "return-queue", className: "breadcrumb-link" })}
+      ${ghostButton(fromResolve ? "Resolve identity" : "Identity Resolution Queue", { action: fromResolve ? "return-resolve" : "return-queue", className: "breadcrumb-link" })}
       ${trailItems}
       <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
       <span>${profile.fullName}</span>
@@ -2174,8 +2185,18 @@ function bindIdentityEvents() {
   document.querySelector("[data-action='return-queue']")?.addEventListener("click", () => {
     state.view = "queue";
     state.modal = null;
+    state.identityReturnContext = null;
     history.replaceState(null, "", getSelectedIds().length ? "#selected" : "#queue");
     renderQueue();
+  });
+  document.querySelector("[data-action='return-resolve']")?.addEventListener("click", () => {
+    const restoreScrollY = state.identityReturnContext?.scrollY;
+    state.view = "resolve";
+    state.modal = null;
+    state.identityTrail = [];
+    state.identityReturnContext = null;
+    history.replaceState(null, "", "#resolve");
+    renderResolve({ restoreScrollY });
   });
   document.querySelectorAll("[data-action='set-viewing-mode']").forEach((button) => {
     button.addEventListener("click", () => {
@@ -2651,12 +2672,14 @@ function hydrateFromHash() {
   if (hash === "#selected") setSelectedIds([candidates[0].id]);
   if (hash === "#resolve" || hash === "#resolve-name" || hash === "#resolve-a") {
     state.view = "resolve";
+    state.identityReturnContext = null;
     setSelectedIds([candidates[0].id]);
   }
   if (identityRoute) {
     state.view = "identity";
     state.activeIdentityKey = identityRoute.key;
     state.identityTrail = [];
+    state.identityReturnContext = null;
     if (identityRoute.dark) state.viewingMode = "dark";
   }
   if (hash === "#photo" || hash === "#green-card" || hash === "#ead") {
