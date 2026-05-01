@@ -161,7 +161,9 @@ function shell(content, options = {}) {
   const crumbs = options.crumbs
     ? `<div class="sub-nav">${options.crumbs
         .map((item, index) =>
-          index === 0 ? `<span class="crumb">${item}</span>` : `<span>›</span><span class="crumb">${item}</span>`,
+          index === 0
+            ? `<span class="crumb">${item}</span>`
+            : `${icon("chevron_right", "crumb-separator")}<span class="crumb">${item}</span>`,
         )
         .join("")}</div>`
     : "";
@@ -197,12 +199,12 @@ function modShell(content) {
       <div class="mod-sub-nav">
         <div class="viewing-mode">
           <span>Viewing Mode</span>
-          <button class="mode-tab ${isDark ? "" : "active"}" type="button" data-action="set-viewing-mode" data-mode="light" aria-pressed="${!isDark}">Light</button>
-          <button class="mode-tab ${isDark ? "active" : ""}" type="button" data-action="set-viewing-mode" data-mode="dark" aria-pressed="${isDark}">Dark</button>
+          ${buttonComponent("Light", { variant: "mode", action: "set-viewing-mode", className: isDark ? "" : "active", attrs: { "data-mode": "light", "aria-pressed": !isDark } })}
+          ${buttonComponent("Dark", { variant: "mode", action: "set-viewing-mode", className: isDark ? "active" : "", attrs: { "data-mode": "dark", "aria-pressed": isDark } })}
         </div>
         <div class="mod-actions">
-          <button class="outline-btn" type="button">View Applicant's Action history</button>
-          <button class="outline-btn" type="button">Request data update</button>
+          ${buttonComponent("View Applicant's Action history", { variant: "outline" })}
+          ${buttonComponent("Request data update", { variant: "outline" })}
         </div>
       </div>
       ${content}
@@ -234,6 +236,99 @@ function candidateId(candidate) {
   return `<span class="candidate-id ${matchingId ? "id-highlight" : ""}">${candidate.id}</span>`;
 }
 
+function attrsToString(attrs = {}) {
+  return Object.entries(attrs)
+    .filter(([, value]) => value !== false && value !== null && value !== undefined)
+    .map(([key, value]) => (value === true ? key : `${key}="${escapeAttribute(String(value))}"`))
+    .join(" ");
+}
+
+function icon(name, className = "") {
+  return `<span class="material-symbols-outlined ${className}" aria-hidden="true">${name}</span>`;
+}
+
+function buttonComponent(label, options = {}) {
+  const {
+    variant = "outline",
+    className = "",
+    action = "",
+    disabled = false,
+    iconName = "",
+    iconPosition = "start",
+    attrs = {},
+  } = options;
+  const legacyClasses = {
+    primary: "primary-btn",
+    secondary: "secondary-btn",
+    outline: "outline-btn",
+    ghost: "link",
+    mode: "mode-tab",
+    icon: "icon-btn",
+  };
+  const classList = ["ui-button", `ui-button--${variant}`, legacyClasses[variant], className].filter(Boolean).join(" ");
+  const attrString = attrsToString({
+    type: "button",
+    class: classList,
+    "data-action": action || undefined,
+    disabled: disabled || undefined,
+    ...attrs,
+  });
+  const iconMarkup = iconName ? icon(iconName, "ui-button__icon") : "";
+  const content = iconMarkup && iconPosition === "end" ? `${label}${iconMarkup}` : `${iconMarkup}${label}`;
+  return `<button ${attrString}>${content}</button>`;
+}
+
+function ghostButton(label, options = {}) {
+  return buttonComponent(label, { ...options, variant: "ghost" });
+}
+
+function iconButton(iconName, label, options = {}) {
+  return buttonComponent("", {
+    ...options,
+    variant: "icon",
+    iconName,
+    attrs: { "aria-label": label, ...(options.attrs || {}) },
+  });
+}
+
+function chip(label, className = "") {
+  return `<span class="ui-chip chip ${className}">${label}</span>`;
+}
+
+function badge(label, options = {}) {
+  const { tone = "", className = "" } = options;
+  return `<span class="ui-badge ${tone ? `ui-badge--${tone}` : ""} ${className}">${label}</span>`;
+}
+
+function statusBadge(status) {
+  return badge(status, { tone: statusClass(status), className: `candidate-status ${statusClass(status)}` });
+}
+
+function checkboxComponent(options = {}) {
+  const { selected = false, label = "Select", action = "", attrs = {} } = options;
+  const attrString = attrsToString({
+    type: "button",
+    class: `ui-checkbox checkbox ${selected ? "selected" : ""}`,
+    role: "checkbox",
+    "aria-checked": selected,
+    "aria-label": label,
+    "data-action": action || undefined,
+    ...attrs,
+  });
+  return `<button ${attrString}>${selected ? icon("check", "ui-checkbox__icon") : ""}</button>`;
+}
+
+function filterCheckbox(label, options = {}) {
+  const { count = "", child = false } = options;
+  return `
+    <label class="ui-checkbox-label ${child ? "filter-child" : ""}">
+      <input class="ui-checkbox-input" type="checkbox" checked />
+      <span class="ui-checkbox-box" aria-hidden="true">${icon("check", "ui-checkbox-check")}</span>
+      <span>${label}${count ? ` <span>(${count})</span>` : ""}</span>
+    </label>
+  `;
+}
+
 function applicantBlock(compact = false) {
   return `
     <section>
@@ -241,7 +336,7 @@ function applicantBlock(compact = false) {
       <div class="identity-summary">
         <div class="portrait-card">
           ${portrait("applicant")}
-          <button class="outline-btn" type="button">View application</button>
+          ${buttonComponent("View application", { variant: "outline" })}
         </div>
         <div class="identity-copy">
           <div class="id-line">${applicant.id}</div>
@@ -257,7 +352,7 @@ function applicantBlock(compact = false) {
           </div>
           <div class="aliases">
             <div class="label">ALIASES</div>
-            <div class="chips">${applicant.aliases.map((alias) => `<span class="chip">${alias}</span>`).join("")}</div>
+            <div class="chips">${applicant.aliases.map((alias) => chip(alias)).join("")}</div>
           </div>
         </div>
       </div>
@@ -290,19 +385,13 @@ function renderQueue() {
         ${applicantBlock()}
         <div class="left-rule"></div>
         <section class="empty-actions">
-          <div class="empty-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="22" height="22">
-              <circle cx="11" cy="11" r="6.2"></circle>
-              <path d="m15.4 15.4 4.1 4.1"></path>
-              <path d="M11 8.2v5.6M8.2 11h5.6"></path>
-            </svg>
-          </div>
+          <div class="empty-icon" aria-hidden="true">${icon("person_search")}</div>
           <div>
             <h2>Don't see potential matches?</h2>
             <p>These are the actions you can take on this identity.</p>
             <div class="button-row">
-              <button class="secondary-btn" type="button">Assign new A#</button>
-              <button class="primary-btn" type="button">Escalate identity resolution</button>
+              ${buttonComponent("Assign new A#", { variant: "secondary" })}
+              ${buttonComponent("Escalate identity resolution", { variant: "primary" })}
             </div>
           </div>
         </section>
@@ -325,21 +414,19 @@ function candidateRow(candidate, index, expanded = false) {
   return `
     <div class="candidate-row">
       <div class="check-wrap">
-        <button class="checkbox ${isSelected ? "selected" : ""}" type="button" data-action="toggle-select" aria-label="Select ${candidate.id}">
-          ${isSelected ? "✓" : ""}
-        </button>
+        ${checkboxComponent({ selected: isSelected, label: `Select ${candidate.id}`, action: "toggle-select" })}
       </div>
       <article class="candidate-card ${isSelected ? "selected" : ""}">
-        ${isSelected ? `<span class="selected-badge">Selected</span>` : ""}
-        ${candidate.pending ? `<span class="selected-badge">Pending review</span>` : ""}
+        ${isSelected ? badge("Selected", { className: "selected-badge" }) : ""}
+        ${candidate.pending ? badge("Pending review", { className: "selected-badge" }) : ""}
         <p class="card-note">${candidate.reason}</p>
         <div class="candidate-top">
           <div class="portrait-card">
             ${portrait("candidate", index, "small")}
-            <button class="outline-btn" type="button" data-action="open-identity">View identity</button>
+            ${buttonComponent("View identity", { variant: "outline", action: "open-identity" })}
           </div>
           <div>
-            <div>${candidateId(candidate)}<span class="candidate-status ${statusClass(candidate.status)}">${candidate.status}</span></div>
+            <div>${candidateId(candidate)}${statusBadge(candidate.status)}</div>
             <div class="candidate-name">${candidate.name}</div>
             <div class="field-row compact">
               ${field("DOB", candidate.dob, candidate.dob === applicant.dob)}
@@ -354,18 +441,18 @@ function candidateRow(candidate, index, expanded = false) {
             </div>
             <div class="aliases candidate-aliases">
               <div class="label">ALIASES</div>
-              <div class="chips">${candidate.aliases.map((alias) => `<span class="chip">${alias}</span>`).join("")}</div>
+              <div class="chips">${candidate.aliases.map((alias) => chip(alias)).join("")}</div>
             </div>
             <div class="relationship-grid">
               <div>
                 <div class="label">CHILDREN</div>
                 <div class="copy">${candidate.children
-                  .map((child) => `<button class="link" type="button">${child}</button>`)
+                  .map((child) => ghostButton(child))
                   .join("<br />")}</div>
               </div>
               <div>
                 <div class="label">SPOUSE</div>
-                <div class="copy"><button class="link" type="button">${candidate.spouse}</button></div>
+                <div class="copy">${ghostButton(candidate.spouse)}</div>
               </div>
             </div>
             <div class="detail-grid">
@@ -393,16 +480,16 @@ function candidateRow(candidate, index, expanded = false) {
 function compactCandidate(candidate, index) {
   return `
     <div class="candidate-row" style="margin-top: 0">
-      <div class="check-wrap"><button class="checkbox" type="button" aria-label="Select ${candidate.id}"></button></div>
+      <div class="check-wrap">${checkboxComponent({ label: `Select ${candidate.id}` })}</div>
       <article class="candidate-card compact-match">
         <p class="card-note">${candidate.reason}</p>
         <div class="candidate-top">
           <div class="portrait-card">
             ${portrait("candidate", index, "small")}
-            <button class="outline-btn" type="button" data-action="open-identity">View identity</button>
+            ${buttonComponent("View identity", { variant: "outline", action: "open-identity" })}
           </div>
           <div>
-            <div>${candidateId(candidate)}<span class="candidate-status ${statusClass(candidate.status)}">${candidate.status}</span></div>
+            <div>${candidateId(candidate)}${statusBadge(candidate.status)}</div>
             <div class="candidate-name">${candidate.name}</div>
             <div class="field-row compact">
               ${field("DOB", candidate.dob, candidate.dob === applicant.dob)}
@@ -430,7 +517,7 @@ function cardData() {
       ${field("EXPIRES", "TBD")}
       <div></div>
       <div class="card-data-heading">EAD CARD</div>
-      <div class="field-value card-link"><button class="link" type="button" data-action="open-ead">View card</button></div>
+      <div class="field-value card-link">${ghostButton("View card", { action: "open-ead" })}</div>
       <div></div>
       ${field("STATUS", "PRINTED", false, false, "blue")}
       ${field("EXPIRES", "December 10, 2019")}
@@ -443,7 +530,7 @@ function summaryBar(visible) {
   return `
     <aside class="summary-bar ${visible ? "visible" : ""}" aria-live="polite">
       <div class="selected-summary">
-        <div class="check-circle">✓</div>
+        <div class="check-circle">${icon("check")}</div>
         <div>
           <div class="summary-title">1 identity selected</div>
           <div class="summary-subtitle">A100001678 · Maria Teresa GARCÍA RAMÍREZ</div>
@@ -452,16 +539,16 @@ function summaryBar(visible) {
       <div>
         <div class="label">Matching datapoints</div>
         <div class="match-chips">
-          <span class="match-chip">DOB</span>
-          <span class="match-chip">FIN</span>
-          <span class="match-chip">COB</span>
-          <span class="match-chip">Parents</span>
+          ${chip("DOB", "match-chip")}
+          ${chip("FIN", "match-chip")}
+          ${chip("COB", "match-chip")}
+          ${chip("Parents", "match-chip")}
           <span class="summary-copy">Similar DOB, FIN, COB, and parents</span>
         </div>
       </div>
       <div class="summary-actions">
-        <button class="secondary-btn" type="button" data-action="clear-selection">Clear</button>
-        <button class="primary-btn" type="button" data-action="resolve">Resolve</button>
+        ${buttonComponent("Clear", { variant: "secondary", action: "clear-selection" })}
+        ${buttonComponent("Resolve", { variant: "primary", action: "resolve" })}
       </div>
     </aside>
   `;
@@ -538,10 +625,10 @@ function selectedIdentityCard() {
       <div class="compact-card">
         <div class="portrait-card">
           ${portrait("candidate", 0, "small")}
-          <button class="outline-btn" type="button" data-action="open-identity">View identity</button>
+          ${buttonComponent("View identity", { variant: "outline", action: "open-identity" })}
         </div>
         <div>
-          <div>${candidateId(candidate)}<span class="candidate-status ${statusClass(candidate.status)}">${candidate.status}</span></div>
+          <div>${candidateId(candidate)}${statusBadge(candidate.status)}</div>
           <div class="candidate-name">${candidate.name}</div>
           <div class="field-row compact">
             ${field("DOB", candidate.dob, true)}
@@ -565,7 +652,7 @@ function resolveSteps(valid) {
     <section class="step">
       <div class="step-header">
         <h3>1. Assign a primary name</h3>
-        <span class="step-badge">${nameComplete ? "Complete" : "Required"}</span>
+        ${badge(nameComplete ? "Complete" : "Required", { className: "step-badge" })}
       </div>
       <p class="helper">Choose which name should become the primary identity name. Alias options stay hidden until a primary name is selected.</p>
       <div class="radio-list">
@@ -587,7 +674,7 @@ function resolveSteps(valid) {
     <section class="step ${nameComplete ? "" : "disabled"}">
       <div class="step-header">
         <h3>2. Assign a primary A#</h3>
-        <span class="step-badge ${nameComplete ? "" : "locked"}">${!nameComplete ? "Locked" : aComplete ? "Complete" : "Required"}</span>
+        ${badge(!nameComplete ? "Locked" : aComplete ? "Complete" : "Required", { className: `step-badge ${nameComplete ? "" : "locked"}` })}
       </div>
       ${
         nameComplete
@@ -619,16 +706,14 @@ function resolveSteps(valid) {
       ${
         valid
           ? `<div class="attachment-row">
-              <button class="link" type="button">Add a link</button>
-              <button class="link" type="button">Attach a document</button>
+              ${ghostButton("Add a link", { iconName: "link" })}
+              ${ghostButton("Attach a document", { iconName: "attach_file" })}
             </div>`
           : ""
       }
       <div class="resolve-actions">
-        <button class="primary-btn" type="button" data-action="submit-resolution" ${valid && !state.submitting ? "" : "disabled"}>
-          ${state.submitting ? "Sending package..." : "Send for Final Review"}
-        </button>
-        <button class="cancel-link" type="button" data-action="cancel-resolve">Cancel</button>
+        ${buttonComponent(state.submitting ? "Sending package..." : "Send for Final Review", { variant: "primary", action: "submit-resolution", disabled: !(valid && !state.submitting) })}
+        ${ghostButton("Cancel", { action: "cancel-resolve", className: "cancel-link" })}
       </div>
     </section>
   `;
@@ -710,7 +795,7 @@ function renderIdentityDetail() {
   const candidate = candidates[0];
   const content = `
     <nav class="mod-breadcrumb" aria-label="Breadcrumb">
-      <button class="breadcrumb-link" type="button" data-action="return-queue">Identity Resolution Queue</button>
+      ${ghostButton("Identity Resolution Queue", { action: "return-queue", className: "breadcrumb-link" })}
       <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
       <span>Applicant Identity</span>
     </nav>
@@ -718,18 +803,18 @@ function renderIdentityDetail() {
       <section class="identity-detail-grid">
         <aside class="identity-side">
           <img class="identity-main-photo" src="${portraitAssets.applicant}" alt="" />
-          <button class="link see-more-link" type="button" data-action="open-photo">See more</button>
+          ${ghostButton("See more", { action: "open-photo", className: "see-more-link" })}
           <div class="identity-verified-block">
-            <div class="label">A# <span class="verified-icon">✓</span></div>
+            <div class="label">A# <span class="verified-icon">${icon("check")}</span></div>
             <div class="big-id">${applicant.id}</div>
-            <button class="link" type="button">See consolidated</button>
+            ${ghostButton("See consolidated")}
           </div>
           <div class="identity-verified-block">
-            <div class="label">FIN <span class="verified-icon">✓</span></div>
+            <div class="label">FIN <span class="verified-icon">${icon("check")}</span></div>
             <div class="big-id">3211-00-4444</div>
           </div>
-          <button class="outline-btn mini-action" type="button">⌁ Stacks</button>
-          <button class="outline-btn mini-action" type="button">⌁ Rails</button>
+          ${buttonComponent("Stacks", { variant: "outline", className: "mini-action", iconName: "inventory_2" })}
+          ${buttonComponent("Rails", { variant: "outline", className: "mini-action", iconName: "account_tree" })}
         </aside>
         <section class="identity-main">
           <div class="name-grid">
@@ -745,15 +830,15 @@ function renderIdentityDetail() {
           <div class="identity-alias-row">
             <div class="label">ALIASES</div>
             <div class="chips">
-              <span class="chip">Maria Lopez</span>
-              <span class="chip">Martina Maria</span>
-              <span class="chip">Miya Kawasaki</span>
-              <button class="link" type="button">See more</button>
+              ${chip("Maria Lopez")}
+              ${chip("Martina Maria")}
+              ${chip("Miya Kawasaki")}
+              ${ghostButton("See more")}
             </div>
           </div>
           <div class="address-block">
             <div class="label">ADDRESS</div>
-            <div>123 4th St. Miami, FL 33131 <button class="link" type="button">See previous</button></div>
+            <div>123 4th St. Miami, FL 33131 ${ghostButton("See previous")}</div>
           </div>
           <div class="detail-divider"></div>
           <section class="identity-section">
@@ -776,21 +861,21 @@ function renderIdentityDetail() {
             <div class="identity-info-grid">
               <div>
                 <div class="label">PARENTS</div>
-                <button class="link stacked-link" type="button">Mia Ramírez</button>
-                <button class="link stacked-link" type="button">Jose García</button>
+                ${ghostButton("Mia Ramírez", { className: "stacked-link" })}
+                ${ghostButton("Jose García", { className: "stacked-link" })}
               </div>
               <div>
                 <div class="label">SPOUSE</div>
-                <button class="link stacked-link" type="button">${candidate.spouse}</button>
+                ${ghostButton(candidate.spouse, { className: "stacked-link" })}
               </div>
               <div>
                 <div class="label">ATTORNEY</div>
                 <div>Hunter Fox</div>
-                <button class="link stacked-link" type="button">See previous</button>
+                ${ghostButton("See previous", { className: "stacked-link" })}
               </div>
               <div>
                 <div class="label">CHILDREN</div>
-                ${candidate.children.map((child) => `<button class="link stacked-link" type="button">${child}</button>`).join("")}
+                ${candidate.children.map((child) => ghostButton(child, { className: "stacked-link" })).join("")}
               </div>
             </div>
           </section>
@@ -832,7 +917,7 @@ function identityFact(label, value, info = false, link = "") {
     <div>
       <div class="label">${label}${info ? infoTooltip(label) : ""}</div>
       <div class="identity-fact-value">${value}</div>
-      ${link ? `<button class="link" type="button">${link}</button>` : ""}
+      ${link ? ghostButton(link) : ""}
     </div>
   `;
 }
@@ -847,10 +932,10 @@ function identityCardData() {
           ${field("EXPIRES", "TBD")}
           ${field("SITE CODE", "A123", false, true)}
         </div>
-        <button class="outline-btn card-trigger" type="button" data-action="open-green-card">View draft green card</button>
+        ${buttonComponent("View draft green card", { variant: "outline", action: "open-green-card", className: "card-trigger" })}
       </div>
       <div>
-        <div class="card-data-heading">EAD CARD <button class="link card-heading-link" type="button" data-action="open-ead">View card</button></div>
+        <div class="card-data-heading">EAD CARD ${ghostButton("View card", { action: "open-ead", className: "card-heading-link" })}</div>
         <div class="identity-card-row ead-card-row">
           ${field("STATUS", "PRINTED", false, false, "blue")}
           ${field("EXPIRES", "December 10, 2019")}
@@ -873,13 +958,13 @@ function backgroundFilters() {
   ];
   return `
     <aside class="background-filters">
-      <label><input type="checkbox" checked /> Select all <span>(9)</span></label>
+      ${filterCheckbox("Select all", { count: 9 })}
       ${groups
         .map(
           ([group, ...items]) => `
             <div class="filter-group">
-              <label><input type="checkbox" checked /> ${group} <span>(${items.length})</span></label>
-              ${items.map((item) => `<label class="filter-child"><input type="checkbox" checked /> ${item}</label>`).join("")}
+              ${filterCheckbox(group, { count: items.length })}
+              ${items.map((item) => filterCheckbox(item, { child: true })).join("")}
             </div>
           `,
         )
@@ -909,9 +994,7 @@ function backgroundRow(row, index) {
         <div class="label">${row.dateLabel}</div>
         <div>${row.date}</div>
       </div>
-      <button class="timeline-caret" type="button" aria-label="${expanded ? "Collapse" : "Expand"} ${row.type}">
-        <span class="material-symbols-outlined">${expanded ? "keyboard_arrow_up" : "keyboard_arrow_down"}</span>
-      </button>
+      ${iconButton(expanded ? "keyboard_arrow_up" : "keyboard_arrow_down", `${expanded ? "Collapse" : "Expand"} ${row.type}`, { className: "timeline-caret" })}
     </article>
   `;
 }
@@ -993,8 +1076,8 @@ function expandedTimelineDetail(row, index) {
         ${details.notes.map((note) => `<div>${note}</div>`).join("")}
       </div>
       <div class="case-links">
-        <button class="link" type="button">Stacks</button>
-        <button class="link" type="button">Rails</button>
+        ${ghostButton("Stacks", { iconName: "inventory_2" })}
+        ${ghostButton("Rails", { iconName: "account_tree" })}
       </div>
     </div>
   `;
@@ -1074,8 +1157,8 @@ function photoOverlay() {
   return `
     <div class="overlay-backdrop">
       <div class="photo-modal" role="dialog" aria-modal="true" aria-label="Photo viewer">
-        <button class="modal-close" type="button" data-action="close-modal">×</button>
-        <div class="photo-title">10 photos <button class="link" type="button">View as a grid</button></div>
+        ${iconButton("close", "Close photo viewer", { action: "close-modal", className: "modal-close" })}
+        <div class="photo-title">10 photos ${ghostButton("View as a grid")}</div>
         <div class="photo-viewer">
           <img class="portrait large-photo" src="${portraitAssets.large}" alt="" />
           <div class="photo-meta">
@@ -1083,12 +1166,12 @@ function photoOverlay() {
             <div><div class="label">RECEIPT #</div><div class="value">IOE1234876542</div></div>
             <div><div class="label">REASON</div><div class="value">ASC Appointment</div></div>
           </div>
-          <button class="link" type="button">View more details</button>
+          ${ghostButton("View more details")}
         </div>
         <div class="thumb-row">
-          <button class="carousel-arrow" type="button">‹</button>
+          ${iconButton("chevron_left", "Previous photo", { className: "carousel-arrow" })}
           ${thumbs}
-          <button class="carousel-arrow" type="button">›</button>
+          ${iconButton("chevron_right", "Next photo", { className: "carousel-arrow" })}
         </div>
       </div>
     </div>
@@ -1099,7 +1182,7 @@ function eadOverlay() {
   return `
     <div class="overlay-backdrop">
       <div class="ead-panel" role="dialog" aria-modal="true" aria-label="EAD card">
-        <button class="modal-close" type="button" data-action="close-modal">×</button>
+        ${iconButton("close", "Close EAD card", { action: "close-modal", className: "modal-close" })}
         <h2>EAD card</h2>
         <img class="ead-art" src="assets/ead-front.png" alt="" />
         <div class="ead-label">EAD Front</div>
@@ -1114,7 +1197,7 @@ function greenCardOverlay() {
   return `
     <div class="overlay-backdrop">
       <div class="green-card-panel" role="dialog" aria-modal="true" aria-label="Draft green card">
-        <button class="modal-close" type="button" data-action="close-modal">×</button>
+        ${iconButton("close", "Close draft green card", { action: "close-modal", className: "modal-close" })}
         <h2>Draft green card</h2>
         <div class="draft-card">
           <div class="draft-card-band">UNITED STATES OF AMERICA · PERMANENT RESIDENT CARD</div>
