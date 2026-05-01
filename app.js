@@ -946,7 +946,7 @@ function cardData() {
 
 function summaryBar(selected = []) {
   const count = selected.length;
-  const visible = count > 0;
+  if (!count) return "";
   const title = `${count} ${count === 1 ? "identity" : "identities"} selected`;
   const subtitle =
     count === 1
@@ -975,7 +975,7 @@ function summaryBar(selected = []) {
         </div>
         <p class="summary-copy cluster-copy">Treating these as possible fragments of the same identity. Resolve packages each candidate's evidence separately for final evaluator review.</p>`;
   return `
-    <aside class="summary-bar ${visible ? "visible" : ""}" aria-live="polite">
+    <aside class="summary-bar visible" aria-live="polite">
       <div class="selected-summary">
         <div class="check-circle">${icon("check")}</div>
         <div>
