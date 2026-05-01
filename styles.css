@@ -913,6 +913,11 @@ h3 {
   font-weight: 700;
 }
 
+.tone-red .field-value {
+  color: var(--red);
+  font-weight: 700;
+}
+
 .tone-ready .field-value {
   color: #2f7d57;
   font-weight: 700;
@@ -1239,6 +1244,12 @@ h3 {
   justify-content: flex-start;
   text-align: left;
   margin-top: 6px;
+}
+
+.empty-value {
+  margin-top: 6px;
+  color: var(--muted);
+  font-weight: 600;
 }
 
 .identity-card-data {

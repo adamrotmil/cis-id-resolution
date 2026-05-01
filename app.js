@@ -20,6 +20,7 @@ const applicantIdentityAliases = [
 
 const candidates = [
   {
+    identityKey: "maria-teresa",
     id: "A100001678",
     name: "Maria Teresa GARCÍA RAMÍREZ",
     status: "EAD APPROVED",
@@ -34,6 +35,7 @@ const candidates = [
     pending: false,
   },
   {
+    identityKey: "julia",
     id: "A100014446",
     name: "Julia GARCÍA RAMÍREZ",
     status: "LPR PENDING",
@@ -44,6 +46,7 @@ const candidates = [
     reason: "This identity has similar DOB and COB.",
   },
   {
+    identityKey: "victoria",
     id: "A100001234",
     name: "Victoria GUNNARSON",
     status: "ASYLUM APPROVED",
@@ -54,6 +57,7 @@ const candidates = [
     reason: "This identity has similar A#.",
   },
   {
+    identityKey: "maria-ramirez",
     id: "A100023667",
     name: "Maria GARCÍA RAMÍREZ",
     status: "ASYLUM DENIED",
@@ -64,6 +68,7 @@ const candidates = [
     reason: "This identity has similar DOB and COB.",
   },
   {
+    identityKey: "maria-teresa-ramirez",
     id: "A100086760",
     name: "María Teresa RAMÍREZ",
     status: "LPR PENDING",
@@ -100,6 +105,7 @@ const state = {
   actionSubmitting: "",
   expandedHistoryIndex: 2,
   viewingMode: savedViewingMode === "dark" ? "dark" : "light",
+  activeIdentityKey: "maria-teresa",
   aliasesExpanded: false,
 };
 
@@ -154,6 +160,269 @@ const portraitAssets = {
   ],
 };
 
+const identityProfiles = {
+  "maria-teresa": {
+    key: "maria-teresa",
+    label: "Potential match identity",
+    first: "María",
+    middle: "Teresa",
+    last: "GARCÍA RAMÍREZ",
+    fullName: "Maria Teresa GARCÍA RAMÍREZ",
+    photo: portraitAssets.main,
+    aNumber: "A100001678",
+    fin: "3211-00-4444",
+    finRaw: "3211004444",
+    coa: "K2",
+    status: "EAD Approved",
+    dob: "March 16, 1964",
+    address: "1328 Coral Way, Miami, FL 33135",
+    aliases: applicantIdentityAliases,
+    biographic: {
+      cob: "Ecuador",
+      poe: "Miami International (MIA)",
+      ssn: "123-45-6789",
+      coc: "Ecuador",
+      doe: "June 18, 2015",
+      passport: "41234567",
+      gender: "Female",
+      dfo: "August 10, 2016",
+      fbi: "285927400",
+    },
+    relationships: {
+      parents: ["Mia Ramírez", "Jose García"],
+      spouse: "Julio Arroyo",
+      attorney: "Hunter Fox",
+      children: ["Gloria Arroyo García", "Mario Arroyo García"],
+    },
+    card: {
+      greenStatus: "READY",
+      greenExpires: "TBD",
+      siteCode: "A123",
+      eadStatus: "PRINTED",
+      eadExpires: "December 10, 2019",
+      provision: "B23",
+      receipt: "89765543182754",
+    },
+    photoMeta: { dateTaken: "March 15, 2019", receipt: "IOE1234876542", reason: "ASC Appointment" },
+    draft: {
+      surname: "GARCÍA RAMÍREZ",
+      givenName: "MARIA TERESA",
+      category: "K2",
+      country: "ECUADOR",
+      birth: "16 MAR 1964",
+      mrz: "GRC<GARCIA<RAMIREZ<<MARIA<TERESA<<<<<<<<<<<",
+    },
+  },
+  julia: {
+    key: "julia",
+    label: "Potential match identity",
+    first: "Julia",
+    middle: "",
+    last: "GARCÍA RAMÍREZ",
+    fullName: "Julia GARCÍA RAMÍREZ",
+    photo: portraitAssets.julia,
+    aNumber: "A100014446",
+    fin: "3211-12-6166",
+    finRaw: "3211126166",
+    coa: "IR1",
+    status: "LPR Pending",
+    dob: "March 16, 1964",
+    address: "2221 SW 12th Ave, Miami, FL 33145",
+    aliases: ["Julia Ramirez", "Julia G. Ramirez", "J. García", "Julia Garcia Moncayo", "Julia R. Moncayo"],
+    biographic: {
+      cob: "Ecuador",
+      poe: "Miami International (MIA)",
+      ssn: "219-44-0187",
+      coc: "Ecuador",
+      doe: "May 22, 2016",
+      passport: "EC4820191",
+      gender: "Female",
+      dfo: "September 4, 2017",
+      fbi: "301448216",
+    },
+    relationships: {
+      parents: ["Julia Ramírez", "Pablo García Moncayo"],
+      spouse: "No spouse recorded",
+      attorney: "Melissa Grant",
+      children: ["Mateo García", "Lucia García"],
+    },
+    card: {
+      greenStatus: "READY",
+      greenExpires: "TBD",
+      siteCode: "M211",
+      eadStatus: "PENDING",
+      eadExpires: "TBD",
+      provision: "C09",
+      receipt: "MSC2044189204",
+    },
+    photoMeta: { dateTaken: "May 22, 2016", receipt: "MSC2044189204", reason: "Benefit intake photo" },
+    draft: {
+      surname: "GARCÍA RAMÍREZ",
+      givenName: "JULIA",
+      category: "IR1",
+      country: "ECUADOR",
+      birth: "16 MAR 1964",
+      mrz: "GRC<GARCIA<RAMIREZ<<JULIA<<<<<<<<<<<<<<<<",
+    },
+  },
+  victoria: {
+    key: "victoria",
+    label: "Potential match identity",
+    first: "Victoria",
+    middle: "",
+    last: "GUNNARSON",
+    fullName: "Victoria GUNNARSON",
+    photo: portraitAssets.victoria,
+    aNumber: "A100001234",
+    fin: "3211-22-3567",
+    finRaw: "32112235667",
+    coa: "AS6",
+    status: "Asylum Approved",
+    dob: "May 20, 1970",
+    address: "410 Maple Street, Buffalo, NY 14202",
+    aliases: ["Vicky Gunnarson", "Victoria Miles", "V. Gunnarson", "Victoria A. Miles"],
+    biographic: {
+      cob: "Canada",
+      poe: "Peace Bridge (BUF)",
+      ssn: "098-34-2210",
+      coc: "Canada",
+      doe: "April 11, 2014",
+      passport: "CA2219037",
+      gender: "Female",
+      dfo: "June 2, 2015",
+      fbi: "441298557",
+    },
+    relationships: {
+      parents: ["Andy Gunnarson", "Rosemary Miles"],
+      spouse: "No spouse recorded",
+      attorney: "Nadia Coleman",
+      children: [],
+    },
+    card: {
+      greenStatus: "READY",
+      greenExpires: "TBD",
+      siteCode: "B404",
+      eadStatus: "ACTIVE",
+      eadExpires: "July 14, 2020",
+      provision: "A05",
+      receipt: "LIN1994421087",
+    },
+    photoMeta: { dateTaken: "June 2, 2015", receipt: "LIN1994421087", reason: "Asylum biometrics" },
+    draft: {
+      surname: "GUNNARSON",
+      givenName: "VICTORIA",
+      category: "AS6",
+      country: "CANADA",
+      birth: "20 MAY 1970",
+      mrz: "GRC<GUNNARSON<<VICTORIA<<<<<<<<<<<<<<<<<<",
+    },
+  },
+  "maria-ramirez": {
+    key: "maria-ramirez",
+    label: "Potential match identity",
+    first: "Maria",
+    middle: "",
+    last: "GARCÍA RAMÍREZ",
+    fullName: "Maria GARCÍA RAMÍREZ",
+    photo: portraitAssets.maria,
+    aNumber: "A100023667",
+    fin: "3209-83-43434",
+    finRaw: "32098343434",
+    coa: "AS2",
+    status: "Asylum Denied",
+    dob: "March 16, 1964",
+    address: "47-09 35th Ave, Queens, NY 11103",
+    aliases: ["Maria Ramirez", "Maria Garcia", "M. García Ramírez", "María R.", "Maria J. Garcia"],
+    biographic: {
+      cob: "Ecuador",
+      poe: "John F. Kennedy International (JFK)",
+      ssn: "157-30-8821",
+      coc: "Ecuador",
+      doe: "October 2, 2013",
+      passport: "EC8831042",
+      gender: "Female",
+      dfo: "November 21, 2015",
+      fbi: "398210664",
+    },
+    relationships: {
+      parents: ["Josephina Ramírez", "Jorge García"],
+      spouse: "No spouse recorded",
+      attorney: "Ravi Mehta",
+      children: ["Sofia García"],
+    },
+    card: {
+      greenStatus: "READY",
+      greenExpires: "TBD",
+      siteCode: "Q118",
+      eadStatus: "EXPIRED",
+      eadExpires: "January 8, 2018",
+      provision: "C08",
+      receipt: "EAC1728019451",
+    },
+    photoMeta: { dateTaken: "November 21, 2015", receipt: "EAC1728019451", reason: "Asylum interview" },
+    draft: {
+      surname: "GARCÍA RAMÍREZ",
+      givenName: "MARIA",
+      category: "AS2",
+      country: "ECUADOR",
+      birth: "16 MAR 1964",
+      mrz: "GRC<GARCIA<RAMIREZ<<MARIA<<<<<<<<<<<<<<<",
+    },
+  },
+  "maria-teresa-ramirez": {
+    key: "maria-teresa-ramirez",
+    label: "Potential match identity",
+    first: "María",
+    middle: "Teresa",
+    last: "RAMÍREZ",
+    fullName: "María Teresa RAMÍREZ",
+    photo: portraitAssets.applicant,
+    aNumber: "A100086760",
+    fin: "3210-09-8765",
+    finRaw: "3210098765",
+    coa: "K2",
+    status: "LPR Pending",
+    dob: "March 16, 1964",
+    address: "5100 NW 7th St, Miami, FL 33126",
+    aliases: ["Maria T Ramirez", "Teresa Ramirez", "M. Teresa García", "Maria Teresa Arroyo", "Maria R. Arroyo"],
+    biographic: {
+      cob: "Ecuador",
+      poe: "Miami International (MIA)",
+      ssn: "184-22-7430",
+      coc: "Ecuador",
+      doe: "March 15, 2019",
+      passport: "EC7412089",
+      gender: "Female",
+      dfo: "March 15, 2019",
+      fbi: "285927522",
+    },
+    relationships: {
+      parents: ["Mia Ramírez", "Jose García"],
+      spouse: "Julio Arroyo",
+      attorney: "Hunter Fox",
+      children: ["Mario Arroyo García"],
+    },
+    card: {
+      greenStatus: "READY",
+      greenExpires: "TBD",
+      siteCode: "A123",
+      eadStatus: "PRINTED",
+      eadExpires: "December 10, 2019",
+      provision: "B23",
+      receipt: "89765543182754",
+    },
+    photoMeta: { dateTaken: "March 15, 2019", receipt: "IOE1234880041", reason: "Port-of-entry intake" },
+    draft: {
+      surname: "RAMÍREZ",
+      givenName: "MARIA TERESA",
+      category: "K2",
+      country: "ECUADOR",
+      birth: "16 MAR 1964",
+      mrz: "GRC<RAMIREZ<<MARIA<TERESA<<<<<<<<<<<<<<",
+    },
+  },
+};
+
 const backgroundRows = [
   { year: "2019", type: "PERMANENT RESIDENCE", title: "I-485", status: "PENDING", dateLabel: "RECEIVED", date: "April 19, 2019", accent: "orange" },
   { year: "2019", type: "ASC APPOINTMENT", title: "Fort Lauderdale ASC", status: "COMPLETED", dateLabel: "TRANSACTION DATE", date: "April 19, 2019", accent: "blue" },
@@ -193,6 +462,10 @@ const tooltipCopy = {
 
 function escapeAttribute(value = "") {
   return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("'", "&#39;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
+function escapeHtml(value = "") {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
 function infoTooltip(label) {
@@ -270,7 +543,7 @@ function portrait(kind = "applicant", index = 0, classes = "") {
 }
 
 function statusClass(status = "") {
-  if (status.includes("DENIED")) return "tone-red";
+  if (status.includes("DENIED") || status.includes("EXPIRED") || status.includes("WATCHLIST")) return "tone-red";
   if (status.includes("PENDING")) return "tone-orange";
   return "tone-blue";
 }
@@ -278,6 +551,43 @@ function statusClass(status = "") {
 function candidateId(candidate) {
   const matchingId = candidate.id === applicant.id;
   return `<span class="candidate-id ${matchingId ? "id-highlight" : ""}">${candidate.id}</span>`;
+}
+
+function identityHash(key = state.activeIdentityKey, mode = state.viewingMode) {
+  return `#identity-${key}${mode === "dark" ? "-dark" : ""}`;
+}
+
+function parseIdentityHash(hash) {
+  if (!hash.startsWith("#identity")) return null;
+  if (hash === "#identity") return { key: "maria-teresa", dark: false };
+  if (hash === "#identity-dark") return { key: "maria-teresa", dark: true };
+
+  const suffix = hash.replace("#identity-", "");
+  const dark = suffix.endsWith("-dark");
+  const key = dark ? suffix.slice(0, -5) : suffix;
+  return { key: identityProfiles[key] ? key : "maria-teresa", dark };
+}
+
+function currentIdentityProfile() {
+  return identityProfiles[state.activeIdentityKey] || identityProfiles["maria-teresa"];
+}
+
+function openIdentity(key = "maria-teresa") {
+  state.activeIdentityKey = identityProfiles[key] ? key : "maria-teresa";
+  state.aliasesExpanded = false;
+  state.modal = null;
+  setView("identity", identityHash(state.activeIdentityKey));
+  renderIdentityDetail();
+}
+
+function openIdentityFromButton(button) {
+  openIdentity(button.dataset.identityKey || "maria-teresa");
+}
+
+function linkedIdentityItems(items = [], fallback = "Not recorded") {
+  const usableItems = items.filter((item) => item && !String(item).startsWith("No "));
+  if (!usableItems.length) return `<div class="empty-value">${fallback}</div>`;
+  return usableItems.map((item) => ghostButton(item, { className: "stacked-link" })).join("");
 }
 
 function getSelectedIds() {
@@ -525,7 +835,7 @@ function candidateRow(candidate, index, expanded = false) {
         <div class="candidate-top">
           <div class="portrait-card">
             ${portrait("candidate", index, "small")}
-            ${buttonComponent("View identity", { variant: "outline", action: "open-identity" })}
+            ${buttonComponent("View identity", { variant: "outline", action: "open-identity", attrs: { "data-identity-key": candidate.identityKey } })}
           </div>
           <div>
             <div class="candidate-heading">${candidateId(candidate)}${statusBadge(candidate.status)}</div>
@@ -590,7 +900,7 @@ function compactCandidate(candidate, index) {
         <div class="candidate-top">
           <div class="portrait-card">
             ${portrait("candidate", index, "small")}
-            ${buttonComponent("View identity", { variant: "outline", action: "open-identity" })}
+            ${buttonComponent("View identity", { variant: "outline", action: "open-identity", attrs: { "data-identity-key": candidate.identityKey } })}
           </div>
           <div>
             <div class="candidate-heading">${candidateId(candidate)}${statusBadge(candidate.status)}</div>
@@ -720,12 +1030,10 @@ function bindQueueEvents() {
     renderQueue();
   });
   document.querySelectorAll("[data-action='open-identity']").forEach((button) => {
-    button.addEventListener("click", () => {
-      setView("identity", "#identity");
-      renderIdentityDetail();
-    });
+    button.addEventListener("click", () => openIdentityFromButton(button));
   });
   document.querySelector("[data-action='open-ead']")?.addEventListener("click", () => {
+    state.activeIdentityKey = candidates[0].identityKey;
     state.modal = "ead";
     renderQueue();
   });
@@ -772,7 +1080,7 @@ function selectedIdentityCard() {
               <div class="compact-card">
                 <div class="portrait-card">
                   ${portrait("candidate", index, "small")}
-                  ${buttonComponent("View identity", { variant: "outline", action: "open-identity" })}
+                  ${buttonComponent("View identity", { variant: "outline", action: "open-identity", attrs: { "data-identity-key": candidate.identityKey } })}
                 </div>
                 <div>
                   <div>${candidateId(candidate)}${statusBadge(candidate.status)}</div>
@@ -945,9 +1253,8 @@ function bindResolveEvents() {
     state.modal = "photo";
     renderResolve();
   });
-  document.querySelector("[data-action='open-identity']")?.addEventListener("click", () => {
-    setView("identity", "#identity");
-    renderIdentityDetail();
+  document.querySelectorAll("[data-action='open-identity']").forEach((button) => {
+    button.addEventListener("click", () => openIdentityFromButton(button));
   });
   bindModalEvents();
 }
@@ -955,30 +1262,31 @@ function bindResolveEvents() {
 function renderIdentityDetail() {
   stopQueueCountdown();
   syncBodyViewingMode(state.viewingMode);
-  const candidate = candidates[0];
-  const visibleAliases = state.aliasesExpanded ? applicantIdentityAliases : applicantIdentityAliases.slice(0, 3);
+  const profile = currentIdentityProfile();
+  const visibleAliases = state.aliasesExpanded ? profile.aliases : profile.aliases.slice(0, 3);
+  const hiddenAliasCount = profile.aliases.length - visibleAliases.length;
   const content = `
     <nav class="mod-breadcrumb" aria-label="Breadcrumb">
       ${ghostButton("Identity Resolution Queue", { action: "return-queue", className: "breadcrumb-link" })}
       <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
-      <span>Applicant Identity</span>
+      <span>${profile.fullName}</span>
     </nav>
     <main class="identity-detail-page">
       <section class="identity-detail-grid identity-dossier">
         <aside class="identity-side">
-          <div class="rail-eyebrow">SOURCE IDENTITY</div>
+          <div class="rail-eyebrow">${profile.label}</div>
           <div class="identity-photo-frame">
-            <img class="identity-main-photo" src="${portraitAssets.applicant}" alt="" />
+            <img class="identity-main-photo" src="${profile.photo}" alt="" />
             ${ghostButton("See more", { action: "open-photo", className: "see-more-link", iconName: "photo_library" })}
           </div>
           <div class="identity-verified-block rail-fact">
             <div class="label">A# <span class="verified-icon">${icon("check")}</span></div>
-            <div class="big-id">${applicant.id}</div>
+            <div class="big-id">${profile.aNumber}</div>
             ${ghostButton("See consolidated")}
           </div>
           <div class="identity-verified-block rail-fact">
             <div class="label">FIN <span class="verified-icon">${icon("check")}</span></div>
-            <div class="big-id">3211-00-4444</div>
+            <div class="big-id">${profile.fin}</div>
           </div>
           <div class="rail-action-stack">
             ${buttonComponent("Stacks", { variant: "outline", className: "mini-action", iconName: "inventory_2" })}
@@ -988,42 +1296,46 @@ function renderIdentityDetail() {
         <section class="identity-main">
           <div class="dossier-kicker">Applicant identity record</div>
           <div class="name-grid">
-            ${identityNameField("FIRST", "María")}
-            ${identityNameField("MIDDLE", "Teresa")}
-            ${identityNameField("LAST", "GARCÍA RAMÍREZ DE ARROYO", "wide")}
+            ${identityNameField("FIRST", profile.first)}
+            ${identityNameField("MIDDLE", profile.middle || "—")}
+            ${identityNameField("LAST", profile.last, "wide")}
           </div>
           <div class="profile-facts">
-            ${identityFact("COA", "K2", true)}
-            ${identityFact("STATUS", "LPR Pending", false, "See previous")}
-            ${identityFact("DOB", applicant.dob, false, "See more")}
+            ${identityFact("COA", profile.coa, true)}
+            ${identityFact("STATUS", profile.status, false, "See previous")}
+            ${identityFact("DOB", profile.dob, false, "See more")}
           </div>
           <div class="identity-alias-row">
             <div class="label">ALIASES</div>
             <div class="chips">
               ${visibleAliases.map((alias) => chip(alias)).join("")}
-              ${ghostButton(state.aliasesExpanded ? "Show fewer" : `See ${applicantIdentityAliases.length - visibleAliases.length} more`, {
-                action: "toggle-aliases",
-                attrs: { "aria-expanded": String(state.aliasesExpanded) },
-              })}
+              ${
+                hiddenAliasCount > 0 || state.aliasesExpanded
+                  ? ghostButton(state.aliasesExpanded ? "Show fewer" : `See ${hiddenAliasCount} more`, {
+                      action: "toggle-aliases",
+                      attrs: { "aria-expanded": String(state.aliasesExpanded) },
+                    })
+                  : ""
+              }
             </div>
           </div>
           <div class="address-block">
             <div class="label">ADDRESS</div>
-            <div>123 4th St. Miami, FL 33131 ${ghostButton("See previous")}</div>
+            <div>${profile.address} ${ghostButton("See previous")}</div>
           </div>
           <div class="detail-divider"></div>
           <section class="identity-section">
             <h3>BIOGRAPHIC DATA</h3>
             <div class="identity-info-grid">
-              ${field("COB", candidate.cob, false, true)}
-              ${field("POE", "Miami International (MIA)", false, true)}
-              ${field("SSN", "123-45-6789")}
-              ${field("COC", candidate.cob, false, true)}
-              ${field("DOE", "June 18, 2015", false, true)}
-              ${field("PASSPORT #", "41234567")}
-              ${field("GENDER", "Female")}
-              ${field("DFO", "August 10, 2016", false, true)}
-              ${field("FBI#", "285927400")}
+              ${field("COB", profile.biographic.cob, false, true)}
+              ${field("POE", profile.biographic.poe, false, true)}
+              ${field("SSN", profile.biographic.ssn)}
+              ${field("COC", profile.biographic.coc, false, true)}
+              ${field("DOE", profile.biographic.doe, false, true)}
+              ${field("PASSPORT #", profile.biographic.passport)}
+              ${field("GENDER", profile.biographic.gender)}
+              ${field("DFO", profile.biographic.dfo, false, true)}
+              ${field("FBI#", profile.biographic.fbi)}
             </div>
           </section>
           <div class="detail-divider"></div>
@@ -1032,28 +1344,27 @@ function renderIdentityDetail() {
             <div class="identity-info-grid">
               <div>
                 <div class="label">PARENTS</div>
-                ${ghostButton("Mia Ramírez", { className: "stacked-link" })}
-                ${ghostButton("Jose García", { className: "stacked-link" })}
+                ${linkedIdentityItems(profile.relationships.parents)}
               </div>
               <div>
                 <div class="label">SPOUSE</div>
-                ${ghostButton(candidate.spouse, { className: "stacked-link" })}
+                ${linkedIdentityItems([profile.relationships.spouse], "No spouse recorded")}
               </div>
               <div>
                 <div class="label">ATTORNEY</div>
-                <div>Hunter Fox</div>
+                <div>${profile.relationships.attorney}</div>
                 ${ghostButton("See previous", { className: "stacked-link" })}
               </div>
               <div>
                 <div class="label">CHILDREN</div>
-                ${candidate.children.map((child) => ghostButton(child, { className: "stacked-link" })).join("")}
+                ${linkedIdentityItems(profile.relationships.children, "No children recorded")}
               </div>
             </div>
           </section>
           <div class="detail-divider"></div>
           <section class="identity-section">
             <h3>CARD DATA</h3>
-            ${identityCardData()}
+            ${identityCardData(profile)}
           </section>
         </section>
       </section>
@@ -1063,7 +1374,7 @@ function renderIdentityDetail() {
         <div class="background-layout">
           ${backgroundFilters()}
           <div class="timeline-list">
-            ${backgroundRows.map((row, index) => backgroundRow(row, index)).join("")}
+            ${backgroundRows.map((row, index) => backgroundRow(row, index, backgroundRows, profile)).join("")}
           </div>
         </div>
       </section>
@@ -1093,17 +1404,20 @@ function identityFact(label, value, info = false, link = "") {
   `;
 }
 
-function identityCardData() {
+function identityCardData(profile = currentIdentityProfile()) {
+  const card = profile.card;
+  const greenTone = card.greenStatus === "READY" ? "ready" : statusClass(card.greenStatus).replace("tone-", "");
+  const eadTone = statusClass(card.eadStatus).replace("tone-", "") || "blue";
   return `
     <div class="identity-card-data">
       <article class="document-card document-card-ready">
         <div class="document-card-header">
           <div class="card-data-heading">GREEN CARD</div>
-          ${badge("READY", { className: "document-status ready" })}
+          ${badge(card.greenStatus, { className: `document-status ${greenTone}` })}
         </div>
         <div class="identity-card-row">
-          ${field("EXPIRES", "TBD")}
-          ${field("SITE CODE", "A123", false, true)}
+          ${field("EXPIRES", card.greenExpires)}
+          ${field("SITE CODE", card.siteCode, false, true)}
           ${field("DRAFT", "Available", false, false, "ready")}
         </div>
         <p class="document-card-copy">Draft document is ready to preview. Final production requires evaluator approval.</p>
@@ -1115,10 +1429,10 @@ function identityCardData() {
           ${ghostButton("View card", { action: "open-ead", className: "card-heading-link", iconName: "visibility" })}
         </div>
         <div class="identity-card-row ead-card-row">
-          ${field("STATUS", "PRINTED", false, false, "blue")}
-          ${field("EXPIRES", "December 10, 2019")}
-          ${field("SITE CODE", "A123", false, true)}
-          ${field("PROVISION OF LAW", "B23", false, true)}
+          ${field("STATUS", card.eadStatus, false, false, eadTone)}
+          ${field("EXPIRES", card.eadExpires)}
+          ${field("SITE CODE", card.siteCode, false, true)}
+          ${field("PROVISION OF LAW", card.provision, false, true)}
         </div>
       </article>
     </div>
@@ -1151,8 +1465,8 @@ function backgroundFilters() {
   `;
 }
 
-function backgroundRow(row, index) {
-  const showYear = index === 0 || backgroundRows[index - 1].year !== row.year;
+function backgroundRow(row, index, rows = backgroundRows, profile = currentIdentityProfile()) {
+  const showYear = index === 0 || rows[index - 1].year !== row.year;
   const icon = timelineIcons[row.type] || "article";
   const expanded = state.expandedHistoryIndex === index;
   return `
@@ -1165,7 +1479,7 @@ function backgroundRow(row, index) {
       <div class="timeline-description">
         <div class="label">${row.type}</div>
         <div class="timeline-title">${row.title}</div>
-        ${expanded ? expandedTimelineDetail(row, index) : ""}
+        ${expanded ? expandedTimelineDetail(row, index, profile) : ""}
       </div>
       <div class="timeline-status ${row.status.toLowerCase().replaceAll(" ", "-")}">${row.status}</div>
       <div class="timeline-date">
@@ -1177,28 +1491,28 @@ function backgroundRow(row, index) {
   `;
 }
 
-function expandedTimelineDetail(row, index) {
+function expandedTimelineDetail(row, index, profile = currentIdentityProfile()) {
   const details = [
     {
-      summary: "Initial permanent residence package is open for adjudication.",
-      meta: [["Receipt #", "IOE0923847125"], ["Office", "Washington Field Office"], ["Last update", "April 19, 2019"]],
-      notes: ["Priority date captured", "Biometrics linked to current A#"],
+      summary: `${row.title} package is open for adjudication under ${profile.aNumber}.`,
+      meta: [["Receipt #", profile.card.receipt], ["Office", `${profile.card.siteCode} Field Office`], ["Last update", row.date]],
+      notes: ["Priority date captured", `Biometrics linked to ${profile.fullName}`],
     },
     {
-      summary: "Biometrics appointment completed and associated with the applicant record.",
-      meta: [["Appointment ID", "ASC-FTL-041919"], ["Location", "Fort Lauderdale ASC"], ["Result", "Completed"]],
+      summary: `Biometrics appointment completed and associated with ${profile.fullName}.`,
+      meta: [["Appointment ID", `ASC-${profile.card.siteCode}-${profile.aNumber.slice(-4)}`], ["Location", `${profile.biographic.poe} ASC`], ["Result", "Completed"]],
       notes: ["Photo captured", "Fingerprints available for background checks"],
     },
     {
-      summary: "Employment authorization approved after review of supporting I-485 record.",
-      meta: [["Receipt #", "MSC1992731142"], ["Card status", "Printed"], ["Last update", "March 20, 2019"]],
+      summary: "Employment authorization reviewed against the supporting benefit record.",
+      meta: [["Receipt #", profile.card.receipt], ["Card status", profile.card.eadStatus], ["Last update", row.date]],
       notes: ["Draft card image available", "Linked to current mailing address"],
       progress: true,
     },
     {
       summary: "Arrival record received from port-of-entry encounter data.",
-      meta: [["Document", "I-94"], ["Carrier", "Aero Nacional 431"], ["Class", "K2"]],
-      notes: ["Entry matched passport 41234567", "POE set to Miami International"],
+      meta: [["Document", "I-94"], ["Carrier", "Aero Nacional 431"], ["Class", profile.coa]],
+      notes: [`Entry matched passport ${profile.biographic.passport}`, `POE set to ${profile.biographic.poe}`],
     },
     {
       summary: "Travel encounter matched against TSA screening event.",
@@ -1212,8 +1526,8 @@ function expandedTimelineDetail(row, index) {
     },
     {
       summary: "Immigration judge decision recorded in court history.",
-      meta: [["Court", "Miami Immigration Court"], ["Proceeding", "Master calendar"], ["Decision", "Approved"]],
-      notes: ["Order added to case file", "Attorney Hunter Fox on record"],
+      meta: [["Court", "Immigration Court"], ["Proceeding", "Master calendar"], ["Decision", row.status || "Recorded"]],
+      notes: ["Order added to case file", `Attorney ${profile.relationships.attorney} on record`],
     },
     {
       summary: "FBI response returned a watchlist indicator requiring evaluator review.",
@@ -1223,12 +1537,12 @@ function expandedTimelineDetail(row, index) {
     {
       summary: "Department of Defense check returned no active derogatory result.",
       meta: [["Source", "DoD"], ["Response", "No hit"], ["Confidence", "High"]],
-      notes: ["Search included FIN and passport", "No additional action required"],
+      notes: [`Search included FIN ${profile.finRaw} and passport`, "No additional action required"],
     },
     {
       summary: "International search returned a possible match in Canadian records.",
       meta: [["Source", "Canada"], ["Response", "Match"], ["Confidence", "Low"]],
-      notes: ["COB and DOB overlap", "Needs evaluator confirmation"],
+      notes: [`COB ${profile.biographic.cob} and DOB overlap`, "Needs evaluator confirmation"],
     },
   ][index];
 
@@ -1276,7 +1590,7 @@ function bindIdentityEvents() {
       } catch {
         // Ignore storage failures; the in-page switch still works.
       }
-      history.replaceState(null, "", state.viewingMode === "dark" ? "#identity-dark" : "#identity");
+      history.replaceState(null, "", identityHash(state.activeIdentityKey, state.viewingMode));
       renderIdentityDetail();
     });
   });
@@ -1428,20 +1742,22 @@ function escalateResolutionOverlay() {
 }
 
 function photoOverlay() {
-  const thumbs = portraitAssets.thumbs
+  const profile = currentIdentityProfile();
+  const photoSet = [profile.photo, ...portraitAssets.thumbs.filter((src) => src !== profile.photo)].slice(0, 8);
+  const thumbs = photoSet
     .map((src, index) => `<img class="portrait tiny thumb ${index === 0 ? "selected" : ""}" src="${src}" alt="" />`)
     .join("");
   return `
     <div class="overlay-backdrop">
       <div class="photo-modal" role="dialog" aria-modal="true" aria-label="Photo viewer">
         ${iconButton("close", "Close photo viewer", { action: "close-modal", className: "modal-close" })}
-        <div class="photo-title">10 photos ${ghostButton("View as a grid")}</div>
+        <div class="photo-title">${photoSet.length} photos ${ghostButton("View as a grid")}</div>
         <div class="photo-viewer">
-          <img class="portrait large-photo" src="${portraitAssets.large}" alt="" />
+          <img class="portrait large-photo" src="${profile.photo}" alt="" />
           <div class="photo-meta">
-            <div><div class="label">DATE TAKEN</div><div class="value">March 15, 2019</div></div>
-            <div><div class="label">RECEIPT #</div><div class="value">IOE1234876542</div></div>
-            <div><div class="label">REASON</div><div class="value">ASC Appointment</div></div>
+            <div><div class="label">DATE TAKEN</div><div class="value">${profile.photoMeta.dateTaken}</div></div>
+            <div><div class="label">RECEIPT #</div><div class="value">${profile.photoMeta.receipt}</div></div>
+            <div><div class="label">REASON</div><div class="value">${profile.photoMeta.reason}</div></div>
           </div>
           ${ghostButton("View more details")}
         </div>
@@ -1456,11 +1772,13 @@ function photoOverlay() {
 }
 
 function eadOverlay() {
+  const profile = currentIdentityProfile();
   return `
     <div class="overlay-backdrop">
       <div class="ead-panel" role="dialog" aria-modal="true" aria-label="EAD card">
         ${iconButton("close", "Close EAD card", { action: "close-modal", className: "modal-close" })}
         <h2>EAD card</h2>
+        <p class="helper">${profile.fullName} · ${profile.card.eadStatus} · ${profile.card.eadExpires}</p>
         <img class="ead-art" src="assets/ead-front.png" alt="" />
         <div class="ead-label">EAD Front</div>
         <img class="ead-art back" src="assets/ead-back.png" alt="" />
@@ -1471,6 +1789,7 @@ function eadOverlay() {
 }
 
 function greenCardOverlay() {
+  const profile = currentIdentityProfile();
   return `
     <div class="overlay-backdrop">
       <div class="green-card-panel" role="dialog" aria-modal="true" aria-label="Draft green card">
@@ -1483,21 +1802,21 @@ function greenCardOverlay() {
         <div class="draft-card">
           <div class="draft-card-band">UNITED STATES OF AMERICA · PERMANENT RESIDENT CARD</div>
           <div class="draft-card-body">
-            <img src="${portraitAssets.applicant}" alt="" />
+            <img src="${profile.photo}" alt="" />
             <div class="draft-fields">
-              <div><span>Surname</span><strong>GARCÍA RAMÍREZ DE ARROYO</strong></div>
-              <div><span>Given Name</span><strong>MARIA TERESA</strong></div>
+              <div><span>Surname</span><strong>${profile.draft.surname}</strong></div>
+              <div><span>Given Name</span><strong>${profile.draft.givenName}</strong></div>
               <div class="draft-field-grid">
-                <div><span>USCIS#</span><strong>${applicant.id.replace("A", "")}</strong></div>
-                <div><span>Category</span><strong>K2</strong></div>
-                <div><span>Country of Birth</span><strong>ECUADOR</strong></div>
-                <div><span>Date of Birth</span><strong>16 MAR 1964</strong></div>
+                <div><span>USCIS#</span><strong>${profile.aNumber.replace("A", "")}</strong></div>
+                <div><span>Category</span><strong>${profile.draft.category}</strong></div>
+                <div><span>Country of Birth</span><strong>${profile.draft.country}</strong></div>
+                <div><span>Date of Birth</span><strong>${profile.draft.birth}</strong></div>
                 <div><span>Resident Since</span><strong>DRAFT</strong></div>
-                <div><span>Card Expires</span><strong>TBD</strong></div>
+                <div><span>Card Expires</span><strong>${profile.card.greenExpires}</strong></div>
               </div>
             </div>
           </div>
-          <div class="draft-mrz">GRC&lt;GARCIA&lt;RAMIREZ&lt;DE&lt;ARROYO&lt;&lt;MARIA&lt;TERESA&lt;&lt;&lt;<br />${applicant.id}ECU640316F&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;DRAFT</div>
+          <div class="draft-mrz">${escapeHtml(profile.draft.mrz)}<br />${profile.aNumber}${profile.draft.country.slice(0, 3)}${profile.draft.birth.replaceAll(" ", "")}F&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;DRAFT</div>
         </div>
         <p class="helper">Draft preview generated from the selected identity record. Final production is held until evaluator approval.</p>
       </div>
@@ -1545,15 +1864,20 @@ function bindModalEvents() {
 
 function hydrateFromHash() {
   const hash = window.location.hash;
+  const identityRoute = parseIdentityHash(hash);
   if (hash === "#selected") setSelectedIds([candidates[0].id]);
   if (hash === "#resolve" || hash === "#resolve-name" || hash === "#resolve-a") {
     state.view = "resolve";
     setSelectedIds([candidates[0].id]);
   }
-  if (hash === "#identity" || hash === "#identity-dark" || hash === "#photo" || hash === "#green-card") {
+  if (identityRoute) {
+    state.view = "identity";
+    state.activeIdentityKey = identityRoute.key;
+    if (identityRoute.dark) state.viewingMode = "dark";
+  }
+  if (hash === "#photo" || hash === "#green-card" || hash === "#ead") {
     state.view = "identity";
   }
-  if (hash === "#identity-dark") state.viewingMode = "dark";
   if (hash === "#resolve-name" || hash === "#resolve-a") {
     state.primaryName = applicant.name;
     state.aliasChoice = "yes";
