@@ -1,5 +1,5 @@
 :root {
-  --nav: #00304e;
+  --nav: #005288;
   --teal: #00576a;
   --teal-2: #007084;
   --teal-ink: #006f8d;
@@ -53,9 +53,9 @@ button {
   display: flex;
   align-items: center;
   padding: 0 28px;
-  background: linear-gradient(105deg, #09284d 0%, #00304e 52%, #062849 100%);
+  background: var(--nav);
   color: white;
-  box-shadow: 0 2px 12px rgba(0, 24, 43, 0.24);
+  box-shadow: 0 2px 12px rgba(0, 50, 86, 0.22);
 }
 
 .brand {
@@ -682,7 +682,7 @@ h3 {
   display: flex;
   align-items: center;
   padding: 0 26px;
-  background: #113553;
+  background: var(--nav);
   color: white;
 }
 

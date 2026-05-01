@@ -124,7 +124,7 @@ function shell(content, options = {}) {
   return `
     <div class="app-shell">
       <header class="top-nav">
-        <div class="brand"><img class="seal" src="assets/pcis-seal.png" alt="" /><span>PCIS</span></div>
+        <div class="brand"><img class="seal" src="assets/dhs-seal.png" alt="" /><span>PCIS</span></div>
         <div class="nav-spacer"></div>
         <div class="nav-title">IDENTITY RESOLUTION QUEUE</div>
         <div class="hello">HELLO, DANIEL</div>
@@ -139,7 +139,7 @@ function modShell(content) {
   return `
     <div class="mod-shell">
       <header class="mod-top-nav">
-        <div class="brand"><img class="seal" src="assets/pcis-seal.png" alt="" /><span>CIS Mod</span></div>
+        <div class="brand"><img class="seal" src="assets/dhs-seal.png" alt="" /><span>CIS Mod</span></div>
         <div class="nav-spacer"></div>
         <div class="nav-title">IDENTITY QUEUE</div>
         <div class="hello">HELLO, DANIEL</div>
