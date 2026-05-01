@@ -877,15 +877,15 @@ h3 {
   height: 65px;
   display: flex;
   align-items: center;
-  padding: 0 34px;
+  padding: 0 28px;
   background: var(--nav);
   color: white;
   box-shadow: 0 2px 12px rgba(0, 50, 86, 0.22);
 }
 
 .mod-top-nav .brand {
-  font-size: 22px;
-  gap: 13px;
+  font-size: 20px;
+  gap: 11px;
 }
 
 .mod-top-nav .seal {
@@ -894,12 +894,13 @@ h3 {
 }
 
 .mod-sub-nav {
-  height: 44px;
+  height: 52px;
   display: flex;
   align-items: center;
-  padding: 0 86px;
-  background: #2f7489;
-  color: white;
+  padding: 0 max(50px, calc((100vw - 1040px) / 2));
+  border-bottom: 1px solid #d5dee4;
+  background: #f7f8f9;
+  color: var(--text);
 }
 
 .viewing-mode {
@@ -914,7 +915,7 @@ h3 {
   height: 28px;
   border: 0;
   background: transparent;
-  color: white;
+  color: #50606b;
   font-weight: 700;
   font-size: 10px;
   padding: 0;
@@ -924,12 +925,13 @@ h3 {
 }
 
 .mode-tab.active {
-  border-bottom: 2px solid white;
+  color: var(--teal);
+  border-bottom: 2px solid var(--teal);
 }
 
 .mode-tab:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #d8f7ff;
+  background: rgba(0, 111, 141, 0.08);
+  color: var(--teal);
   transform: none;
 }
 
@@ -940,8 +942,8 @@ h3 {
 }
 
 .mod-actions .outline-btn {
-  color: white;
-  border-color: rgba(255, 255, 255, 0.85);
+  color: var(--teal-ink);
+  border-color: #8db7c2;
   background: transparent;
   min-height: 28px;
   font-size: 9px;
@@ -1599,8 +1601,8 @@ h3 {
 }
 
 .mod-shell.dark-mode .mod-sub-nav {
-  background: #17495b;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0e1820;
+  border-bottom-color: #253845;
 }
 
 .mod-shell.dark-mode .identity-detail-page {
@@ -1698,6 +1700,20 @@ h3 {
   color: #a8eaff;
 }
 
+.mod-shell.dark-mode .mode-tab {
+  color: #a8b8c4;
+}
+
+.mod-shell.dark-mode .mode-tab.active {
+  color: #79d2ee;
+  border-bottom-color: #79d2ee;
+}
+
+.mod-shell.dark-mode .mode-tab:hover {
+  background: rgba(121, 210, 238, 0.1);
+  color: #c6f4ff;
+}
+
 .mod-shell.dark-mode .outline-btn:hover:not(:disabled),
 .mod-shell.dark-mode .secondary-btn:hover:not(:disabled) {
   border-color: #79d2ee;
@@ -1707,14 +1723,14 @@ h3 {
 }
 
 .mod-shell.dark-mode .mod-actions .outline-btn {
-  border-color: rgba(255, 255, 255, 0.78);
+  border-color: #5f8da2;
   background: transparent;
-  color: white;
+  color: #a8eaff;
 }
 
 .mod-shell.dark-mode .mod-actions .outline-btn:hover:not(:disabled) {
-  border-color: white;
-  background: rgba(255, 255, 255, 0.12);
+  border-color: #79d2ee;
+  background: rgba(121, 210, 238, 0.1);
 }
 
 .mod-shell.dark-mode .ui-checkbox-box,

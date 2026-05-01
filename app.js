@@ -193,9 +193,9 @@ function modShell(content) {
   return `
     <div class="mod-shell ${isDark ? "dark-mode" : "light-mode"}">
       <header class="mod-top-nav">
-        <div class="brand"><img class="seal" src="assets/dhs-seal.png" alt="" /><span>CIS Mod</span></div>
+        <div class="brand"><img class="seal" src="assets/dhs-seal.png" alt="" /><span>PCIS</span></div>
         <div class="nav-spacer"></div>
-        <div class="nav-title">IDENTITY QUEUE</div>
+        <div class="nav-title">IDENTITY RESOLUTION QUEUE</div>
         <div class="hello">HELLO, DANIEL</div>
       </header>
       <div class="mod-sub-nav">
