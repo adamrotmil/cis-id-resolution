@@ -108,10 +108,12 @@ const state = {
   activeIdentityKey: "maria-teresa",
   aliasesExpanded: false,
   attachments: [],
+  undoSnapshot: null,
 };
 
 const app = document.querySelector("#app");
 let queueTimerId = null;
+let toastTimerId = null;
 
 function formatQueueCountdown() {
   const remainingMs = Math.max(0, state.queueDeadlineAt - Date.now());
@@ -820,6 +822,7 @@ function renderQueue() {
   app.innerHTML = shell(content) + renderToast() + renderModal();
   startQueueCountdown();
   bindQueueEvents();
+  bindToastEvents();
 }
 
 function candidateRow(candidate, index, expanded = false) {
@@ -1070,6 +1073,7 @@ function renderResolve(options = {}) {
     window.scrollTo(0, 0);
   }
   bindResolveEvents();
+  bindToastEvents();
 }
 
 function selectedIdentityCard() {
@@ -1258,17 +1262,31 @@ function bindResolveEvents() {
   });
   document.querySelector("[data-action='submit-resolution']")?.addEventListener("click", () => {
     const selectedCount = selectedCandidates().length || 1;
+    const undoSnapshot = {
+      selectedIds: getSelectedIds(),
+      primaryName: state.primaryName,
+      aliasChoice: state.aliasChoice,
+      primaryA: state.primaryA,
+      consolidatedA: state.consolidatedA,
+      notes: state.notes,
+      attachments: [...state.attachments],
+      scrollY: window.scrollY,
+    };
     state.submitting = true;
-    renderResolve();
+    renderResolve({ preserveScroll: true });
     window.setTimeout(() => {
       state.submitting = false;
       state.submitted = true;
+      state.undoSnapshot = undoSnapshot;
       setSelectedIds([]);
       state.view = "queue";
       state.toast = {
         title: "Resolution package sent",
         body: `${selectedCount} linked identity ${selectedCount === 1 ? "candidate" : "candidates"} and your notes were sent to a final evaluator.`,
         status: "Pending final resolution",
+        action: "undo-resolution-submit",
+        actionLabel: "Undo",
+        duration: 3000,
       };
       history.replaceState(null, "", "#pending");
       renderQueue();
@@ -1671,13 +1689,68 @@ function renderToast() {
           status: "Pending final resolution",
         }
       : state.toast;
+  const duration = toast.duration || 0;
   return `
-    <div class="toast" role="status">
-      <h3>${toast.title}</h3>
-      <p class="helper">${toast.body}</p>
-      ${toast.status ? `<p class="helper"><strong>Status:</strong> ${toast.status}</p>` : ""}
+    <div class="toast ${duration ? "timed-toast" : ""}" role="status" style="${duration ? `--toast-duration: ${duration}ms;` : ""}">
+      <div class="toast-content">
+        <h3>${toast.title}</h3>
+        <p class="helper">${toast.body}</p>
+        ${toast.status ? `<p class="helper"><strong>Status:</strong> ${toast.status}</p>` : ""}
+      </div>
+      ${
+        toast.action
+          ? `<div class="toast-actions">${ghostButton(toast.actionLabel || "Undo", { action: toast.action, className: "toast-action" })}</div>`
+          : ""
+      }
+      ${duration ? `<div class="toast-progress" aria-hidden="true"><span></span></div>` : ""}
     </div>
   `;
+}
+
+function dismissToast(options = {}) {
+  window.clearTimeout(toastTimerId);
+  toastTimerId = null;
+  if (options.clearUndo) state.undoSnapshot = null;
+  state.toast = "";
+  if (state.view === "resolve") renderResolve({ preserveScroll: true });
+  else if (state.view === "identity") renderIdentityDetail();
+  else renderQueue();
+}
+
+function bindToastEvents() {
+  window.clearTimeout(toastTimerId);
+  toastTimerId = null;
+  const toast = state.toast;
+  if (!toast || typeof toast === "string") return;
+
+  document.querySelector("[data-action='undo-resolution-submit']")?.addEventListener("click", undoResolutionSubmit);
+
+  if (toast.duration) {
+    toastTimerId = window.setTimeout(() => {
+      if (state.toast === toast) dismissToast({ clearUndo: true });
+    }, toast.duration);
+  }
+}
+
+function undoResolutionSubmit() {
+  const snapshot = state.undoSnapshot;
+  if (!snapshot) return;
+  window.clearTimeout(toastTimerId);
+  toastTimerId = null;
+  state.submitting = false;
+  state.submitted = false;
+  setSelectedIds(snapshot.selectedIds);
+  state.primaryName = snapshot.primaryName;
+  state.aliasChoice = snapshot.aliasChoice;
+  state.primaryA = snapshot.primaryA;
+  state.consolidatedA = snapshot.consolidatedA;
+  state.notes = snapshot.notes;
+  state.attachments = [...snapshot.attachments];
+  state.undoSnapshot = null;
+  state.toast = "";
+  state.view = "resolve";
+  history.replaceState(null, "", "#resolve");
+  renderResolve({ restoreScrollY: snapshot.scrollY });
 }
 
 function renderModal() {
