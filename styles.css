@@ -989,10 +989,20 @@ h3 {
   border: 1px solid #d8dbdd;
   background: white;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
 }
 
 .timeline-card + .timeline-card {
   border-top: 0;
+}
+
+.timeline-card:hover {
+  background: #fbfdfe;
+}
+
+.timeline-card.expanded {
+  background: #ffffff;
+  box-shadow: 0 3px 10px rgba(0, 43, 74, 0.07);
 }
 
 .timeline-accent {
@@ -1062,11 +1072,42 @@ h3 {
   border: 0;
   background: transparent;
   align-self: start;
+  color: var(--text);
+  padding: 0;
+}
+
+.timeline-caret .material-symbols-outlined {
+  font-size: 18px;
+  line-height: 1;
 }
 
 .timeline-expanded {
-  margin-top: 28px;
+  margin-top: 18px;
   font-size: 10.5px;
+  color: #26343c;
+}
+
+.timeline-expanded p {
+  margin: 0 0 14px;
+  max-width: 480px;
+  line-height: 1.45;
+}
+
+.timeline-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(96px, 1fr));
+  gap: 16px;
+  max-width: 520px;
+  margin-bottom: 14px;
+}
+
+.timeline-notes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  gap: 8px 18px;
+  max-width: 520px;
+  margin-top: 14px;
+  color: #52616c;
 }
 
 .progress-line {
@@ -1101,8 +1142,9 @@ h3 {
 }
 
 .case-links {
-  grid-template-columns: 1fr 1fr;
-  margin-top: 22px;
+  display: flex;
+  gap: 18px;
+  margin-top: 16px;
 }
 
 .summary-bar {

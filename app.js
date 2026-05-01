@@ -77,6 +77,7 @@ const state = {
   submitting: false,
   submitted: false,
   toast: "",
+  expandedHistoryIndex: 2,
 };
 
 const app = document.querySelector("#app");
@@ -103,7 +104,7 @@ const portraitAssets = {
 const backgroundRows = [
   { year: "2019", type: "PERMANENT RESIDENCE", title: "I-485", status: "PENDING", dateLabel: "RECEIVED", date: "April 19, 2019", accent: "orange" },
   { year: "2019", type: "ASC APPOINTMENT", title: "Fort Lauderdale ASC", status: "COMPLETED", dateLabel: "TRANSACTION DATE", date: "April 19, 2019", accent: "blue" },
-  { year: "2019", type: "WORK AUTHORIZATION", title: "I-765", status: "APPROVED", dateLabel: "PROCESS DATE", date: "March 20, 2019", accent: "blue", expanded: true },
+  { year: "2019", type: "WORK AUTHORIZATION", title: "I-765", status: "APPROVED", dateLabel: "PROCESS DATE", date: "March 20, 2019", accent: "blue" },
   { year: "2019", type: "AIR ENTRY", title: "Miami International (MIA)", status: "", dateLabel: "ENTRY DATE", date: "March 15, 2019", accent: "blue" },
   { year: "2019", type: "TSA", title: "Miami International (MIA)", status: "", dateLabel: "ENCOUNTER DATE", date: "March 15, 2019", accent: "blue" },
   { year: "2017", type: "AIR EXIT", title: "Dulles International (IAD)", status: "", dateLabel: "EXIT DATE", date: "April 20, 2017", accent: "gray" },
@@ -846,9 +847,10 @@ function backgroundFilters() {
 function backgroundRow(row, index) {
   const showYear = index === 0 || backgroundRows[index - 1].year !== row.year;
   const icon = timelineIcons[row.type] || "article";
+  const expanded = state.expandedHistoryIndex === index;
   return `
     ${showYear ? `<h3 class="timeline-year">${row.year}</h3>` : ""}
-    <article class="timeline-card ${row.expanded ? "expanded" : ""}">
+    <article class="timeline-card ${expanded ? "expanded" : ""}" data-history-index="${index}" aria-expanded="${expanded}">
       <div class="timeline-accent ${row.accent}"></div>
       <div class="timeline-icon" aria-hidden="true">
         <span class="material-symbols-outlined">${icon}</span>
@@ -856,37 +858,113 @@ function backgroundRow(row, index) {
       <div>
         <div class="label">${row.type}</div>
         <div class="timeline-title">${row.title}</div>
-        ${row.expanded ? expandedTimelineDetail() : ""}
+        ${expanded ? expandedTimelineDetail(row, index) : ""}
       </div>
       <div class="timeline-status ${row.status.toLowerCase().replaceAll(" ", "-")}">${row.status}</div>
       <div>
         <div class="label">${row.dateLabel}</div>
         <div>${row.date}</div>
       </div>
-      <button class="timeline-caret" type="button">⌄</button>
+      <button class="timeline-caret" type="button" aria-label="${expanded ? "Collapse" : "Expand"} ${row.type}">
+        <span class="material-symbols-outlined">${expanded ? "keyboard_arrow_up" : "keyboard_arrow_down"}</span>
+      </button>
     </article>
   `;
 }
 
-function expandedTimelineDetail() {
+function expandedTimelineDetail(row, index) {
+  const details = [
+    {
+      summary: "Initial permanent residence package is open for adjudication.",
+      meta: [["Receipt #", "IOE0923847125"], ["Office", "Washington Field Office"], ["Last update", "April 19, 2019"]],
+      notes: ["Priority date captured", "Biometrics linked to current A#"],
+    },
+    {
+      summary: "Biometrics appointment completed and associated with the applicant record.",
+      meta: [["Appointment ID", "ASC-FTL-041919"], ["Location", "Fort Lauderdale ASC"], ["Result", "Completed"]],
+      notes: ["Photo captured", "Fingerprints available for background checks"],
+    },
+    {
+      summary: "Employment authorization approved after review of supporting I-485 record.",
+      meta: [["Receipt #", "MSC1992731142"], ["Card status", "Printed"], ["Last update", "March 20, 2019"]],
+      notes: ["Draft card image available", "Linked to current mailing address"],
+      progress: true,
+    },
+    {
+      summary: "Arrival record received from port-of-entry encounter data.",
+      meta: [["Document", "I-94"], ["Carrier", "Aero Nacional 431"], ["Class", "K2"]],
+      notes: ["Entry matched passport 41234567", "POE set to Miami International"],
+    },
+    {
+      summary: "Travel encounter matched against TSA screening event.",
+      meta: [["Encounter ID", "TSA-2019-0315-88"], ["Terminal", "MIA Central"], ["Disposition", "Cleared"]],
+      notes: ["Name variant matched", "No active hold at encounter time"],
+    },
+    {
+      summary: "Departure history imported from air exit manifest.",
+      meta: [["Document", "I-94"], ["Carrier", "Capital Air 218"], ["Destination", "IAD outbound"]],
+      notes: ["Historical travel event", "No associated enforcement action"],
+    },
+    {
+      summary: "Immigration judge decision recorded in court history.",
+      meta: [["Court", "Miami Immigration Court"], ["Proceeding", "Master calendar"], ["Decision", "Approved"]],
+      notes: ["Order added to case file", "Attorney Hunter Fox on record"],
+    },
+    {
+      summary: "FBI response returned a watchlist indicator requiring evaluator review.",
+      meta: [["Source", "FBI Name Check"], ["Response", "Watchlist"], ["Confidence", "Moderate"]],
+      notes: ["Name and DOB overlap", "Manual review required before final decision"],
+    },
+    {
+      summary: "Department of Defense check returned no active derogatory result.",
+      meta: [["Source", "DoD"], ["Response", "No hit"], ["Confidence", "High"]],
+      notes: ["Search included FIN and passport", "No additional action required"],
+    },
+    {
+      summary: "International search returned a possible match in Canadian records.",
+      meta: [["Source", "Canada"], ["Response", "Match"], ["Confidence", "Low"]],
+      notes: ["COB and DOB overlap", "Needs evaluator confirmation"],
+    },
+  ][index];
+
   return `
     <div class="timeline-expanded">
-      <div>Type: Permanent Residence</div>
-      <div class="progress-line"><span></span><span></span><span></span></div>
-      <div class="progress-labels">
-        <div><strong>FILE RECEIVED</strong><br />Dec. 27, 2018</div>
-        <div><strong>ASC APPOINTMENT</strong><br />Jan. 7, 2019</div>
-        <div><strong>ASC APPOINTMENT</strong><br />May 10, 2019</div>
+      <p>${details.summary}</p>
+      <div class="timeline-meta-grid">
+        ${details.meta.map(([label, value]) => `<div><div class="label">${label}</div><div>${value}</div></div>`).join("")}
+      </div>
+      ${
+        details.progress
+          ? `
+            <div class="progress-line"><span></span><span></span><span></span></div>
+            <div class="progress-labels">
+              <div><strong>FILE RECEIVED</strong><br />Dec. 27, 2018</div>
+              <div><strong>ASC APPOINTMENT</strong><br />Jan. 7, 2019</div>
+              <div><strong>CARD PRINTED</strong><br />Mar. 20, 2019</div>
+            </div>
+          `
+          : ""
+      }
+      <div class="timeline-notes">
+        ${details.notes.map((note) => `<div>${note}</div>`).join("")}
       </div>
       <div class="case-links">
-        <div>I-485 DOCUMENT<br />Receipt Number: 12345678<br />Last updated: Jan. 8, 2019<br /><button class="link" type="button">Stacks</button></div>
-        <div>File location: Washington Field Office<br />Last updated: Jan. 8, 2019<br /><button class="link" type="button">Rails</button></div>
+        <button class="link" type="button">Stacks</button>
+        <button class="link" type="button">Rails</button>
       </div>
     </div>
   `;
 }
 
 function bindIdentityEvents() {
+  document.querySelectorAll(".timeline-card").forEach((row) => {
+    row.addEventListener("click", (event) => {
+      if (event.target.closest?.(".timeline-expanded .link")) return;
+      const index = Number(row.dataset.historyIndex);
+      state.expandedHistoryIndex = state.expandedHistoryIndex === index ? null : index;
+      renderIdentityDetail();
+    });
+  });
   document.querySelector("[data-action='open-photo']")?.addEventListener("click", () => {
     state.modal = "photo";
     renderIdentityDetail();
