@@ -1266,7 +1266,7 @@ function applicantBlock(compact = false) {
       <div class="identity-summary">
         <div class="portrait-card">
           ${portrait("applicant")}
-          ${buttonComponent("View application", { variant: "outline" })}
+          ${buttonComponent("View application", { variant: "outline", action: "open-application", iconName: "description" })}
         </div>
         <div class="identity-copy">
           <div class="id-line">${applicant.id}</div>
@@ -1548,6 +1548,10 @@ function bindQueueEvents() {
     state.modal = "assign-a";
     renderQueue();
   });
+  document.querySelector("[data-action='open-application']")?.addEventListener("click", () => {
+    state.modal = "application";
+    renderQueue();
+  });
   document.querySelector("[data-action='open-escalate']")?.addEventListener("click", () => {
     state.modal = "escalate";
     renderQueue();
@@ -1781,6 +1785,10 @@ function bindResolveEvents() {
       state.consolidatedA = event.target.value;
       renderResolve({ preserveScroll: true });
     });
+  });
+  document.querySelector("[data-action='open-application']")?.addEventListener("click", () => {
+    state.modal = "application";
+    renderResolve({ preserveScroll: true });
   });
   document.querySelector(".notes-field")?.addEventListener("input", (event) => {
     state.notes = event.target.value;
@@ -2362,6 +2370,7 @@ function undoResolutionSubmit() {
 }
 
 function renderModal() {
+  if (state.modal === "application") return applicationOverlay();
   if (state.modal === "photo") return photoOverlay();
   if (state.modal === "ead") return eadOverlay();
   if (state.modal === "green-card") return greenCardOverlay();
@@ -2469,6 +2478,35 @@ function resolvePackageSummary() {
         <span>${selected.length || 1} selected fragment${selected.length === 1 ? "" : "s"}</span>
       </div>
       <p>${linkedNames}</p>
+    </div>
+  `;
+}
+
+function applicationOverlay() {
+  return `
+    <div class="overlay-backdrop">
+      <div class="application-modal" role="dialog" aria-modal="true" aria-labelledby="application-title">
+        ${iconButton("close", "Close application packet", { action: "close-modal", className: "modal-close" })}
+        <div class="application-modal-header">
+          <div>
+            <div class="modal-kicker">SOURCE APPLICATION</div>
+            <h2 id="application-title">I-485 application packet</h2>
+            <p class="helper">${applicant.name} · ${applicant.id} · Ticket 123789123</p>
+          </div>
+          ${badge("Sample packet", { className: "document-status ready" })}
+        </div>
+        <div class="application-frame-wrap">
+          <iframe
+            class="application-frame"
+            title="I-485 application packet PDF"
+            src="assets/i-485-application-packet.pdf#view=FitH"
+          ></iframe>
+        </div>
+        <div class="application-modal-footer">
+          <span>Scroll inside the document to review the packet pages.</span>
+          ${ghostButton("Close", { action: "close-modal" })}
+        </div>
+      </div>
     </div>
   `;
 }
