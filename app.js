@@ -918,23 +918,29 @@ function renderIdentityDetail() {
       <span>Applicant Identity</span>
     </nav>
     <main class="identity-detail-page">
-      <section class="identity-detail-grid">
+      <section class="identity-detail-grid identity-dossier">
         <aside class="identity-side">
-          <img class="identity-main-photo" src="${portraitAssets.applicant}" alt="" />
-          ${ghostButton("See more", { action: "open-photo", className: "see-more-link" })}
-          <div class="identity-verified-block">
+          <div class="rail-eyebrow">SOURCE IDENTITY</div>
+          <div class="identity-photo-frame">
+            <img class="identity-main-photo" src="${portraitAssets.applicant}" alt="" />
+            ${ghostButton("See more", { action: "open-photo", className: "see-more-link", iconName: "photo_library" })}
+          </div>
+          <div class="identity-verified-block rail-fact">
             <div class="label">A# <span class="verified-icon">${icon("check")}</span></div>
             <div class="big-id">${applicant.id}</div>
             ${ghostButton("See consolidated")}
           </div>
-          <div class="identity-verified-block">
+          <div class="identity-verified-block rail-fact">
             <div class="label">FIN <span class="verified-icon">${icon("check")}</span></div>
             <div class="big-id">3211-00-4444</div>
           </div>
-          ${buttonComponent("Stacks", { variant: "outline", className: "mini-action", iconName: "inventory_2" })}
-          ${buttonComponent("Rails", { variant: "outline", className: "mini-action", iconName: "account_tree" })}
+          <div class="rail-action-stack">
+            ${buttonComponent("Stacks", { variant: "outline", className: "mini-action", iconName: "inventory_2" })}
+            ${buttonComponent("Rails", { variant: "outline", className: "mini-action", iconName: "account_tree" })}
+          </div>
         </aside>
         <section class="identity-main">
+          <div class="dossier-kicker">Applicant identity record</div>
           <div class="name-grid">
             ${identityNameField("FIRST", "María")}
             ${identityNameField("MIDDLE", "Teresa")}
@@ -1043,24 +1049,31 @@ function identityFact(label, value, info = false, link = "") {
 function identityCardData() {
   return `
     <div class="identity-card-data">
-      <div>
-        <div class="card-data-heading">GREEN CARD</div>
+      <article class="document-card document-card-ready">
+        <div class="document-card-header">
+          <div class="card-data-heading">GREEN CARD</div>
+          ${badge("READY", { className: "document-status ready" })}
+        </div>
         <div class="identity-card-row">
-          ${field("STATUS", "READY", false, false, "ready")}
           ${field("EXPIRES", "TBD")}
           ${field("SITE CODE", "A123", false, true)}
+          ${field("DRAFT", "Available", false, false, "ready")}
         </div>
-        ${buttonComponent("View draft green card", { variant: "outline", action: "open-green-card", className: "card-trigger" })}
-      </div>
-      <div>
-        <div class="card-data-heading">EAD CARD ${ghostButton("View card", { action: "open-ead", className: "card-heading-link" })}</div>
+        <p class="document-card-copy">Draft document is ready to preview. Final production requires evaluator approval.</p>
+        ${buttonComponent("View draft green card", { variant: "outline", action: "open-green-card", className: "card-trigger", iconName: "badge" })}
+      </article>
+      <article class="document-card">
+        <div class="document-card-header">
+          <div class="card-data-heading">EAD CARD</div>
+          ${ghostButton("View card", { action: "open-ead", className: "card-heading-link", iconName: "visibility" })}
+        </div>
         <div class="identity-card-row ead-card-row">
           ${field("STATUS", "PRINTED", false, false, "blue")}
           ${field("EXPIRES", "December 10, 2019")}
           ${field("SITE CODE", "A123", false, true)}
           ${field("PROVISION OF LAW", "B23", false, true)}
         </div>
-      </div>
+      </article>
     </div>
   `;
 }
@@ -1102,13 +1115,13 @@ function backgroundRow(row, index) {
       <div class="timeline-icon" aria-hidden="true">
         <span class="material-symbols-outlined">${icon}</span>
       </div>
-      <div>
+      <div class="timeline-description">
         <div class="label">${row.type}</div>
         <div class="timeline-title">${row.title}</div>
         ${expanded ? expandedTimelineDetail(row, index) : ""}
       </div>
       <div class="timeline-status ${row.status.toLowerCase().replaceAll(" ", "-")}">${row.status}</div>
-      <div>
+      <div class="timeline-date">
         <div class="label">${row.dateLabel}</div>
         <div>${row.date}</div>
       </div>
@@ -1411,7 +1424,11 @@ function greenCardOverlay() {
     <div class="overlay-backdrop">
       <div class="green-card-panel" role="dialog" aria-modal="true" aria-label="Draft green card">
         ${iconButton("close", "Close draft green card", { action: "close-modal", className: "modal-close" })}
-        <h2>Draft green card</h2>
+        <div class="modal-kicker">DOCUMENT PREVIEW</div>
+        <div class="green-card-heading">
+          <h2>Draft green card</h2>
+          ${badge("Ready for review", { className: "document-status ready" })}
+        </div>
         <div class="draft-card">
           <div class="draft-card-band">UNITED STATES OF AMERICA · PERMANENT RESIDENT CARD</div>
           <div class="draft-card-body">
@@ -1431,7 +1448,7 @@ function greenCardOverlay() {
           </div>
           <div class="draft-mrz">GRC&lt;GARCIA&lt;RAMIREZ&lt;DE&lt;ARROYO&lt;&lt;MARIA&lt;TERESA&lt;&lt;&lt;<br />${applicant.id}ECU640316F&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;DRAFT</div>
         </div>
-        <p class="helper">Draft preview generated from the selected identity record. Final production requires evaluator approval.</p>
+        <p class="helper">Draft preview generated from the selected identity record. Final production is held until evaluator approval.</p>
       </div>
     </div>
   `;
