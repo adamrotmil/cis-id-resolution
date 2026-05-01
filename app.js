@@ -107,6 +107,7 @@ const state = {
   viewingMode: savedViewingMode === "dark" ? "dark" : "light",
   activeIdentityKey: "maria-teresa",
   aliasesExpanded: false,
+  attachments: [],
 };
 
 const app = document.querySelector("#app");
@@ -726,7 +727,7 @@ function checkboxComponent(options = {}) {
     "data-action": action || undefined,
     ...attrs,
   });
-  return `<button ${attrString}>${selected ? icon("check", "ui-checkbox__icon") : ""}</button>`;
+  return `<button ${attrString}>${selected ? icon("check_small", "ui-checkbox__icon") : ""}</button>`;
 }
 
 function filterCheckbox(label, options = {}) {
@@ -1040,7 +1041,8 @@ function bindQueueEvents() {
   bindModalEvents();
 }
 
-function renderResolve() {
+function renderResolve(options = {}) {
+  const restoreScrollY = options.preserveScroll ? window.scrollY : options.restoreScrollY;
   stopQueueCountdown();
   syncBodyViewingMode("light");
   if (!selectedCandidates().length) setSelectedIds([candidates[0].id]);
@@ -1060,8 +1062,13 @@ function renderResolve() {
       </div>
     </main>
   `;
-  app.innerHTML = shell(content, { crumbs: ["Resolve identity", "Link"] }) + renderModal();
-  window.scrollTo(0, 0);
+  app.innerHTML = shell(content, { crumbs: ["Resolve identity", "Link"] }) + renderToast() + renderModal();
+  if (Number.isFinite(restoreScrollY)) {
+    window.scrollTo(0, restoreScrollY);
+    window.requestAnimationFrame(() => window.scrollTo(0, restoreScrollY));
+  } else {
+    window.scrollTo(0, 0);
+  }
   bindResolveEvents();
 }
 
@@ -1111,8 +1118,9 @@ function resolveSteps(valid) {
   const aOptions = [...new Set([applicant.id, ...selected.map((candidate) => candidate.id)])];
   const nonPrimaryNames = nameOptions.filter((name) => name !== state.primaryName);
   const remainingA = remainingANumbers();
+  const attachmentCount = state.attachments.length;
   return `
-    <section class="step">
+    <section class="step ${nameComplete ? "complete" : "active"}">
       <div class="step-header">
         <h3>1. Assign a primary name</h3>
         ${badge(nameComplete ? "Complete" : "Required", { className: "step-badge" })}
@@ -1123,7 +1131,8 @@ function resolveSteps(valid) {
       </div>
       ${
         nameComplete
-          ? `<div class="disclosure">
+          ? `<div class="disclosure" aria-live="polite">
+              <div class="disclosure-marker">${icon("subdirectory_arrow_right")}</div>
               <h3>Keep the non-primary selected names as aliases?</h3>
               ${nonPrimaryNames.length ? `<p class="helper">${nonPrimaryNames.join(" · ")}</p>` : ""}
               <div class="radio-list">
@@ -1134,7 +1143,7 @@ function resolveSteps(valid) {
           : ""
       }
     </section>
-    <section class="step ${nameComplete ? "" : "disabled"}">
+    <section class="step ${nameComplete ? aComplete ? "complete" : "active" : "disabled"}">
       <div class="step-header">
         <h3>2. Assign a primary A#</h3>
         ${badge(!nameComplete ? "Locked" : aComplete ? "Complete" : "Required", { className: `step-badge ${nameComplete ? "" : "locked"}` })}
@@ -1149,15 +1158,17 @@ function resolveSteps(valid) {
       }
       ${
         aComplete && remainingA
-          ? `<div class="disclosure">
+          ? `<div class="disclosure" aria-live="polite">
+              <div class="disclosure-marker">${icon("subdirectory_arrow_right")}</div>
               <h3>Keep "${remainingA}" as consolidated A#${remainingA.includes(",") ? "s" : ""} for this identity?</h3>
+              <p class="helper">Consolidated A-numbers remain searchable but this package will name ${state.primaryA} as primary.</p>
               <div class="radio-list">
                 ${radioOption("consolidated-a", "Yes", "yes", state.consolidatedA)}
                 ${radioOption("consolidated-a", "No", "no", state.consolidatedA)}
               </div>
             </div>`
           : aComplete
-            ? `<div class="disclosure"><p class="helper">No additional A-numbers need to be consolidated for this package.</p></div>`
+            ? `<div class="disclosure" aria-live="polite"><div class="disclosure-marker">${icon("subdirectory_arrow_right")}</div><p class="helper">No additional A-numbers need to be consolidated for this package.</p></div>`
           : ""
       }
     </section>
@@ -1170,11 +1181,12 @@ function resolveSteps(valid) {
       ${
         valid
           ? `<div class="attachment-row">
-              ${ghostButton("Add a link", { iconName: "link" })}
-              ${ghostButton("Attach a document", { iconName: "attach_file" })}
+              ${ghostButton("Add a link", { action: "open-add-link", iconName: "link" })}
+              ${ghostButton("Attach a document", { action: "open-attach-document", iconName: "attach_file" })}
             </div>`
           : ""
       }
+      ${attachmentCount ? attachmentSummary() : ""}
       <div class="resolve-actions">
         ${buttonComponent(state.submitting ? "Sending package..." : "Send for Final Review", { variant: "primary", action: "submit-resolution", disabled: !(valid && !state.submitting) })}
         ${ghostButton("Cancel", { action: "cancel-resolve", className: "cancel-link" })}
@@ -1192,6 +1204,19 @@ function radioOption(name, label, value, selectedValue) {
   `;
 }
 
+function attachmentSummary() {
+  return `
+    <div class="attachment-summary" aria-live="polite">
+      <div class="label">PACKAGE MATERIALS</div>
+      <div class="attachment-pill-row">
+        ${state.attachments
+          .map((item) => `<span class="attachment-pill">${icon(item.type === "link" ? "link" : "description")}${item.label}</span>`)
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
 function remainingANumbers() {
   const ids = [...new Set([applicant.id, ...selectedCandidates().map((candidate) => candidate.id)])].filter((id) => id !== state.primaryA);
   return ids.join(", ");
@@ -1202,26 +1227,26 @@ function bindResolveEvents() {
     input.addEventListener("change", (event) => {
       state.primaryName = event.target.value;
       if (!state.aliasChoice) state.aliasChoice = "yes";
-      renderResolve();
+      renderResolve({ preserveScroll: true });
     });
   });
   document.querySelectorAll("input[name='alias-choice']").forEach((input) => {
     input.addEventListener("change", (event) => {
       state.aliasChoice = event.target.value;
-      renderResolve();
+      renderResolve({ preserveScroll: true });
     });
   });
   document.querySelectorAll("input[name='primary-a']").forEach((input) => {
     input.addEventListener("change", (event) => {
       state.primaryA = event.target.value;
       state.consolidatedA = "";
-      renderResolve();
+      renderResolve({ preserveScroll: true });
     });
   });
   document.querySelectorAll("input[name='consolidated-a']").forEach((input) => {
     input.addEventListener("change", (event) => {
       state.consolidatedA = event.target.value;
-      renderResolve();
+      renderResolve({ preserveScroll: true });
     });
   });
   document.querySelector(".notes-field")?.addEventListener("input", (event) => {
@@ -1251,7 +1276,15 @@ function bindResolveEvents() {
   });
   document.querySelector("[data-action='open-photo']")?.addEventListener("click", () => {
     state.modal = "photo";
-    renderResolve();
+    renderResolve({ preserveScroll: true });
+  });
+  document.querySelector("[data-action='open-add-link']")?.addEventListener("click", () => {
+    state.modal = "add-link";
+    renderResolve({ preserveScroll: true });
+  });
+  document.querySelector("[data-action='open-attach-document']")?.addEventListener("click", () => {
+    state.modal = "attach-document";
+    renderResolve({ preserveScroll: true });
   });
   document.querySelectorAll("[data-action='open-identity']").forEach((button) => {
     button.addEventListener("click", () => openIdentityFromButton(button));
@@ -1653,6 +1686,8 @@ function renderModal() {
   if (state.modal === "green-card") return greenCardOverlay();
   if (state.modal === "assign-a") return assignANumberOverlay();
   if (state.modal === "escalate") return escalateResolutionOverlay();
+  if (state.modal === "add-link") return addLinkOverlay();
+  if (state.modal === "attach-document") return attachDocumentOverlay();
   return "";
 }
 
@@ -1735,6 +1770,84 @@ function escalateResolutionOverlay() {
         <div class="modal-actions">
           ${ghostButton("Cancel", { action: "close-modal" })}
           ${buttonComponent(submitting ? "Sending..." : "Send escalation", { variant: "primary", action: "confirm-escalate", disabled: submitting })}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function resolvePackageSummary() {
+  const selected = selectedCandidates();
+  const linkedNames = selected.length ? selected.map((candidate) => candidate.name).join(" · ") : candidates[0].name;
+  return `
+    <div class="package-context-card">
+      <div class="label">RESOLUTION PACKAGE</div>
+      <strong>${state.primaryName || applicant.name}</strong>
+      <div class="action-record-meta">
+        <span>Primary A# ${state.primaryA || applicant.id}</span>
+        <span>${selected.length || 1} selected fragment${selected.length === 1 ? "" : "s"}</span>
+      </div>
+      <p>${linkedNames}</p>
+    </div>
+  `;
+}
+
+function addLinkOverlay() {
+  return `
+    <div class="overlay-backdrop">
+      <div class="action-modal package-modal" role="dialog" aria-modal="true" aria-labelledby="add-link-title">
+        ${iconButton("close", "Close add link dialog", { action: "close-modal", className: "modal-close" })}
+        <div class="modal-kicker">PACKAGE MATERIAL</div>
+        <h2 id="add-link-title">Add supporting link</h2>
+        <p class="helper">Add a case-system reference that the final evaluator should review with this identity package.</p>
+        ${resolvePackageSummary()}
+        <label class="action-note-label" for="support-link-label">Link label</label>
+        <input id="support-link-label" class="modal-input" value="Background check packet" />
+        <label class="action-note-label" for="support-link-url">Reference URL or case path</label>
+        <input id="support-link-url" class="modal-input" value="pcis://case/123789123/background-checks" />
+        <div class="modal-helper-row">
+          ${icon("info", "modal-helper-icon")}
+          <span>The link is included as package context. It does not change the underlying identity records.</span>
+        </div>
+        <div class="modal-actions">
+          ${ghostButton("Cancel", { action: "close-modal" })}
+          ${buttonComponent("Add link to package", { variant: "primary", action: "confirm-add-link" })}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function attachDocumentOverlay() {
+  return `
+    <div class="overlay-backdrop">
+      <div class="action-modal package-modal" role="dialog" aria-modal="true" aria-labelledby="attach-document-title">
+        ${iconButton("close", "Close attach document dialog", { action: "close-modal", className: "modal-close" })}
+        <div class="modal-kicker">PACKAGE MATERIAL</div>
+        <h2 id="attach-document-title">Attach a document</h2>
+        <p class="helper">Select a plausible source document to include with the review package. The prototype simulates the attachment state.</p>
+        ${resolvePackageSummary()}
+        <div class="document-choice-list">
+          <label class="document-choice">
+            <input type="radio" name="document-choice" value="I-485 receipt bundle" checked />
+            <span>${icon("description")}I-485 receipt bundle</span>
+          </label>
+          <label class="document-choice">
+            <input type="radio" name="document-choice" value="ASC biometrics notice" />
+            <span>${icon("fingerprint")}ASC biometrics notice</span>
+          </label>
+          <label class="document-choice">
+            <input type="radio" name="document-choice" value="Name check response memo" />
+            <span>${icon("person_search")}Name check response memo</span>
+          </label>
+        </div>
+        <div class="modal-helper-row">
+          ${icon("task_alt", "modal-helper-icon")}
+          <span>Attached documents travel with the package sent for final evaluator review.</span>
+        </div>
+        <div class="modal-actions">
+          ${ghostButton("Cancel", { action: "close-modal" })}
+          ${buttonComponent("Attach selected document", { variant: "primary", action: "confirm-attach-document" })}
         </div>
       </div>
     </div>
@@ -1828,7 +1941,7 @@ function bindModalEvents() {
   document.querySelectorAll("[data-action='close-modal']").forEach((button) => button.addEventListener("click", () => {
     state.modal = null;
     state.actionSubmitting = "";
-    if (state.view === "resolve") renderResolve();
+    if (state.view === "resolve") renderResolve({ preserveScroll: true });
     else if (state.view === "identity") renderIdentityDetail();
     else renderQueue();
   }));
@@ -1859,6 +1972,28 @@ function bindModalEvents() {
       };
       renderQueue();
     }, 650);
+  });
+  document.querySelector("[data-action='confirm-add-link']")?.addEventListener("click", () => {
+    const label = document.querySelector("#support-link-label")?.value?.trim() || "Supporting link";
+    state.attachments = [...state.attachments, { type: "link", label }];
+    state.modal = null;
+    state.toast = {
+      title: "Link added to package",
+      body: `${label} will be included for final evaluator review.`,
+      status: "Package material staged",
+    };
+    renderResolve({ preserveScroll: true });
+  });
+  document.querySelector("[data-action='confirm-attach-document']")?.addEventListener("click", () => {
+    const label = document.querySelector("input[name='document-choice']:checked")?.value || "Source document";
+    state.attachments = [...state.attachments, { type: "document", label }];
+    state.modal = null;
+    state.toast = {
+      title: "Document attached",
+      body: `${label} was added to the resolution package.`,
+      status: "Package material staged",
+    };
+    renderResolve({ preserveScroll: true });
   });
 }
 
