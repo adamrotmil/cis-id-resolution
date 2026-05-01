@@ -709,6 +709,11 @@ function renderIdentityDetail() {
   syncBodyViewingMode(state.viewingMode);
   const candidate = candidates[0];
   const content = `
+    <nav class="mod-breadcrumb" aria-label="Breadcrumb">
+      <button class="breadcrumb-link" type="button" data-action="return-queue">Identity Resolution Queue</button>
+      <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+      <span>Applicant Identity</span>
+    </nav>
     <main class="identity-detail-page">
       <section class="identity-detail-grid">
         <aside class="identity-side">
@@ -996,6 +1001,12 @@ function expandedTimelineDetail(row, index) {
 }
 
 function bindIdentityEvents() {
+  document.querySelector("[data-action='return-queue']")?.addEventListener("click", () => {
+    state.view = "queue";
+    state.modal = null;
+    history.replaceState(null, "", state.selectedId ? "#selected" : "#queue");
+    renderQueue();
+  });
   document.querySelectorAll("[data-action='set-viewing-mode']").forEach((button) => {
     button.addEventListener("click", () => {
       state.viewingMode = button.dataset.mode === "dark" ? "dark" : "light";

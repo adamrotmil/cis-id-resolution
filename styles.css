@@ -799,6 +799,38 @@ h3 {
   padding: 6px 16px;
 }
 
+.mod-breadcrumb {
+  width: 1040px;
+  margin: 0 auto;
+  padding-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #5b6872;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mod-breadcrumb .material-symbols-outlined {
+  font-size: 15px;
+  line-height: 1;
+  color: #7b8790;
+}
+
+.breadcrumb-link {
+  border: 0;
+  background: transparent;
+  color: var(--teal-ink);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.mod-breadcrumb + .identity-detail-page {
+  padding-top: 24px;
+}
+
 .identity-detail-page {
   width: 1040px;
   margin: 0 auto;
@@ -1228,6 +1260,18 @@ h3 {
 
 .mod-shell.dark-mode .label {
   color: #9dacb7;
+}
+
+.mod-shell.dark-mode .mod-breadcrumb {
+  color: #a7b7c2;
+}
+
+.mod-shell.dark-mode .mod-breadcrumb .material-symbols-outlined {
+  color: #748a98;
+}
+
+.mod-shell.dark-mode .breadcrumb-link {
+  color: #79d2ee;
 }
 
 .mod-shell.dark-mode .identity-main-photo {
