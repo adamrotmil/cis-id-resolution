@@ -108,6 +108,7 @@ const state = {
   activeIdentityKey: "maria-teresa",
   identityTrail: [],
   identityReturnContext: null,
+  stacksReturnContext: null,
   aliasesExpanded: false,
   activeHistoryFilters: null,
   photoIndex: 0,
@@ -1053,6 +1054,19 @@ function openIdentityFromButton(button) {
   openIdentity(button.dataset.identityKey || "maria-teresa", { trail: [], returnContext });
 }
 
+function openStacks() {
+  state.stacksReturnContext = {
+    view: state.view,
+    scrollY: window.scrollY,
+    identityKey: state.activeIdentityKey,
+    viewingMode: state.viewingMode,
+  };
+  state.view = "stacks";
+  state.modal = null;
+  history.replaceState(null, "", "#stacks");
+  renderStacks();
+}
+
 function openRelatedIdentityFromButton(button) {
   const targetKey = button.dataset.identityKey || "maria-teresa";
   const parentKey = button.dataset.parentIdentityKey || state.activeIdentityKey;
@@ -1904,7 +1918,7 @@ function renderIdentityDetail() {
             <div class="big-id">${profile.fin}</div>
           </div>
           <div class="rail-action-stack">
-            ${buttonComponent("Stacks", { variant: "outline", className: "mini-action", iconName: "inventory_2" })}
+            ${buttonComponent("Stacks", { variant: "outline", action: "open-stacks", className: "mini-action", iconName: "inventory_2" })}
             ${buttonComponent("Rails", { variant: "outline", className: "mini-action", iconName: "account_tree" })}
           </div>
         </aside>
@@ -2194,7 +2208,7 @@ function expandedTimelineDetail(row, index, profile = currentIdentityProfile()) 
         ${details.notes.map((note) => `<div>${note}</div>`).join("")}
       </div>
       <div class="case-links">
-        ${ghostButton("Stacks", { iconName: "inventory_2" })}
+        ${ghostButton("Stacks", { action: "open-stacks", iconName: "inventory_2" })}
         ${ghostButton("Rails", { iconName: "account_tree" })}
       </div>
     </div>
@@ -2267,6 +2281,9 @@ function bindIdentityEvents() {
   document.querySelector("[data-action='open-ead']")?.addEventListener("click", () => {
     state.modal = "ead";
     renderIdentityDetail();
+  });
+  document.querySelectorAll("[data-action='open-stacks']").forEach((button) => {
+    button.addEventListener("click", openStacks);
   });
   bindIdentityNavigationEvents();
   bindModalEvents();
@@ -2367,6 +2384,161 @@ function undoResolutionSubmit() {
   state.view = "resolve";
   history.replaceState(null, "", "#resolve");
   renderResolve({ restoreScrollY: snapshot.scrollY });
+}
+
+function stacksReturnLabel() {
+  if (state.stacksReturnContext?.view === "resolve") return "Back to Resolve Identity";
+  if (state.stacksReturnContext?.view === "identity") return "Back to Identity Record";
+  return "Back to Identity Resolution Queue";
+}
+
+function renderStacks() {
+  stopQueueCountdown();
+  syncBodyViewingMode("light");
+  const profile = currentIdentityProfile();
+  const stackFiles = [
+    { title: "I-485 Application", type: "Benefit form", date: "May 18, 2019", src: "assets/photo-thumb-01.png", status: "PENDING" },
+    { title: "I-765 Work Authorization", type: "Benefit form", date: "May 18, 2019", src: "assets/photo-thumb-02.png", status: "PENDING" },
+    { title: "Birth Certificate", type: "Civil document", date: "Mar. 2, 2019", src: "assets/photo-thumb-03.png", status: "REVIEWED" },
+    { title: "Passport Biographic Page", type: "Travel document", date: "Feb. 28, 2019", src: "assets/photo-thumb-04.png", status: "REVIEWED" },
+    { title: "ASC Biometrics Notice", type: "Appointment notice", date: "Apr. 19, 2019", src: "assets/photo-thumb-05.png", status: "MATCHED" },
+    { title: "EAD Card Front", type: "Card image", date: "Dec. 10, 2019", src: "assets/ead-front.png", status: "STORED" },
+  ];
+  const cases = [
+    ["5/18/19", "I-881", "PENDING", "EAC7294028469"],
+    ["5/18/19", "I-765", "PENDING", profile.card.receipt],
+    ["2/28/19", "I-589", "PENDING", "EAC7294023721"],
+    ["1/24/19", "I-821", "APPROVED", "EAC7294023123"],
+    ["1/14/19", "I-765", "APPROVED", "EAC7294023123"],
+  ];
+  const related = [
+    ["Mia Ramírez", "Parent", "A7294028469"],
+    ["Jose García", "Parent", "A8923840283"],
+    [profile.relationships.spouse || "Julio Arroyo", "Spouse", "A7294028469"],
+    [(profile.relationships.children || ["Gloria Arroyo García"])[0], "Child", "A8923840283"],
+  ];
+  app.innerHTML = `
+    <div class="stacks-shell">
+      <header class="stacks-top-nav">
+        <div class="stacks-brand"><img class="seal" src="assets/dhs-seal.png" alt="" /><span>STACKS</span></div>
+        <label class="stacks-search" aria-label="Search files">
+          <input type="search" placeholder="Search for files..." />
+          ${icon("search")}
+        </label>
+        <div class="stacks-user">Hello, Daniel <span>|</span> Logout</div>
+      </header>
+      <main class="stacks-page">
+        <div class="stacks-meta-row">
+          ${ghostButton(stacksReturnLabel(), { action: "return-stacks", iconName: "arrow_back" })}
+          <span>Current as of: 07/07/2018 3:14PM EST</span>
+        </div>
+        <section class="stacks-overview">
+          <article class="stacks-person-panel">
+            <div class="stacks-person-header">
+              <h1>${profile.fullName}</h1>
+              <div class="stacks-inline-actions">
+                ${ghostButton("Identity", { action: "return-stacks", iconName: "open_in_new" })}
+                ${ghostButton("Activity", { iconName: "history" })}
+              </div>
+            </div>
+            <div class="stacks-field-list">
+              <div><span>Files</span><strong>${profile.aNumber} · Locate<br />${profile.fin} · Locate</strong></div>
+              <div><span>Date of Birth</span><strong>${profile.dob}</strong></div>
+              <div><span>Country of Birth</span><strong>${profile.biographic.cob}</strong></div>
+              <div>
+                <span>Related Applicants</span>
+                <strong>${related.map(([name, role, id]) => `${name} | ${role} · ${id}`).join("<br />")}</strong>
+              </div>
+            </div>
+          </article>
+          <article class="stacks-case-panel">
+            <h2>Cases & Representative Forms</h2>
+            <div class="stacks-case-table">
+              <div class="stacks-case-head">Initial Filing Date</div>
+              <div class="stacks-case-head">Benefit Type</div>
+              <div class="stacks-case-head">Case Status</div>
+              <div class="stacks-case-head">Receipt Number</div>
+              ${cases
+                .map(
+                  ([date, type, status, receipt]) => `
+                    <div>${date}</div>
+                    <div>${type}</div>
+                    <div class="stacks-status ${status.toLowerCase()}">${status}</div>
+                    <div class="stacks-receipt">${receipt}</div>
+                  `,
+                )
+                .join("")}
+            </div>
+          </article>
+        </section>
+        <section class="stacks-file-section">
+          <div class="stacks-section-heading">
+            <h2>File Contents</h2>
+            ${buttonComponent("Upload document", { variant: "outline", iconName: "upload" })}
+          </div>
+          <div class="stacks-tabs">
+            <button type="button" class="stacks-tab active">Applicant (17)</button>
+            <button type="button" class="stacks-tab">Internal (2)</button>
+          </div>
+          <div class="stacks-toolbar">
+            <div>${icon("filter_list")} Filter By: <strong>Document Type</strong> <strong>Tag</strong> <strong>Date Added</strong></div>
+            <div>${icon("sort")} Sort By: <strong>Date Added (newest)</strong> <span class="stacks-view-toggle">${icon("view_list")}${icon("grid_view")}</span></div>
+          </div>
+          <div class="stacks-case-folder">
+            <div class="stacks-folder-title">
+              <span class="stacks-folder-dot"></span>
+              <strong>${profile.card.receipt} · I-881 · MAY 18 2019</strong>
+              <span class="stacks-status pending">PENDING</span>
+              ${icon("expand_less")}
+            </div>
+            <div class="stacks-document-grid">
+              ${stackFiles
+                .map(
+                  (file) => `
+                    <article class="stacks-document-card">
+                      <div class="stacks-document-thumb"><img src="${file.src}" alt="" /></div>
+                      <div class="stacks-document-title">${file.title}</div>
+                      <div class="stacks-document-meta">${file.type} · ${file.date}</div>
+                      <span class="stacks-file-status">${file.status}</span>
+                    </article>
+                  `,
+                )
+                .join("")}
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  `;
+  window.scrollTo(0, 0);
+  bindStacksEvents();
+}
+
+function bindStacksEvents() {
+  document.querySelectorAll("[data-action='return-stacks']").forEach((button) => {
+    button.addEventListener("click", () => {
+      const context = state.stacksReturnContext;
+      state.stacksReturnContext = null;
+      if (context?.identityKey) state.activeIdentityKey = context.identityKey;
+      if (context?.viewingMode) state.viewingMode = context.viewingMode;
+      if (context?.view === "resolve") {
+        state.view = "resolve";
+        history.replaceState(null, "", "#resolve");
+        renderResolve({ restoreScrollY: context.scrollY });
+        return;
+      }
+      if (context?.view === "identity") {
+        state.view = "identity";
+        history.replaceState(null, "", identityHash(state.activeIdentityKey, state.viewingMode));
+        renderIdentityDetail();
+        requestAnimationFrame(() => window.scrollTo({ top: context.scrollY || 0 }));
+        return;
+      }
+      state.view = "queue";
+      history.replaceState(null, "", "#queue");
+      renderQueue();
+    });
+  });
 }
 
 function renderModal() {
@@ -2904,6 +3076,9 @@ function hydrateFromHash() {
     state.identityReturnContext = null;
     setSelectedIds([candidates[0].id]);
   }
+  if (hash === "#stacks") {
+    state.view = "stacks";
+  }
   if (identityRoute) {
     state.view = "identity";
     state.activeIdentityKey = identityRoute.key;
@@ -2934,4 +3109,5 @@ function hydrateFromHash() {
 hydrateFromHash();
 if (state.view === "resolve") renderResolve();
 else if (state.view === "identity") renderIdentityDetail();
+else if (state.view === "stacks") renderStacks();
 else renderQueue();
