@@ -1673,7 +1673,7 @@ function candidateRow(candidate, index, expanded = false) {
               ${cardData()}
             </div>
             ${expanded ? evidenceSourcesDisclosure(candidate) : ""}
-            ${candidate.pending ? pendingRibbon() : ""}
+            ${candidate.pending ? pendingRibbon(candidate) : ""}
           </div>
         </div>
       </article>
@@ -1811,11 +1811,17 @@ function summaryBar(selected = []) {
   `;
 }
 
-function pendingRibbon() {
+function pendingRibbon(candidate = candidates[0]) {
+  const sources = candidateSourceProfile(candidate).sources.join(" · ");
+  const reviewFields = candidateReviewFlags(candidate);
   return `
     <div class="pending-ribbon">
       <strong>Status: Pending final resolution.</strong>
-      This candidate and your notes were sent to a final evaluator.
+      Sent with source evidence for evaluator review.
+      <div class="pending-ribbon-grid">
+        <div><span>Evidence sources</span><strong>${sourceCountForCandidates([candidate])}</strong><small>${sources}</small></div>
+        <div><span>Fields requiring review</span><strong>${reviewFields.length}</strong><small>${reviewFields.join(" · ") || "No review flags"}</small></div>
+      </div>
     </div>
   `;
 }
@@ -3577,6 +3583,7 @@ function hydrateFromHash() {
   const hash = window.location.hash;
   const identityRoute = parseIdentityHash(hash);
   if (hash === "#selected") setSelectedIds([candidates[0].id]);
+  if (hash === "#selected-multi") setSelectedIds(candidates.slice(0, 3).map((candidate) => candidate.id));
   if (hash === "#resolve" || hash === "#resolve-name" || hash === "#resolve-a") {
     state.view = "resolve";
     state.identityReturnContext = null;

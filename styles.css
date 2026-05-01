@@ -3485,6 +3485,48 @@ h3 {
   font-size: 13px;
 }
 
+.pending-ribbon-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.pending-ribbon-grid > div {
+  padding: 10px;
+  border: 1px solid #ead69b;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.pending-ribbon-grid span,
+.pending-ribbon-grid strong,
+.pending-ribbon-grid small {
+  display: block;
+}
+
+.pending-ribbon-grid span {
+  color: #6a5630;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pending-ribbon-grid strong {
+  margin-top: 5px;
+  color: #533a0d;
+  font-size: 13px;
+}
+
+.pending-ribbon-grid small {
+  margin-top: 4px;
+  color: #6e4a17;
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
 .overlay-backdrop {
   position: fixed;
   inset: 0;
