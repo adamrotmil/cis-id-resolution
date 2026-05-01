@@ -17,6 +17,18 @@
   --shadow: 0 -8px 24px rgba(0, 34, 52, 0.15);
   --card-shadow: 0 8px 28px rgba(13, 49, 72, 0.07);
   --card-border: #d9e1e6;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+  --space-11: 44px;
+  --space-12: 48px;
 }
 
 * {
@@ -178,6 +190,31 @@ button {
   display: grid;
   grid-template-columns: 720px 1fr;
   min-height: calc(100vh - 65px);
+  --queue-label-size: 10px;
+  --queue-value-size: 12.5px;
+  --queue-copy-size: 12.5px;
+}
+
+.queue-grid .label {
+  font-size: var(--queue-label-size);
+}
+
+.queue-grid .value,
+.queue-grid .field .field-value {
+  font-size: var(--queue-value-size);
+  line-height: 1.35;
+}
+
+.queue-grid .parents .copy,
+.queue-grid .aliases .copy {
+  font-size: var(--queue-copy-size);
+  line-height: 1.55;
+}
+
+.queue-grid .chip {
+  height: 28px;
+  padding-inline: 12px;
+  font-size: 10px;
 }
 
 .left-pane {
@@ -352,14 +389,14 @@ h3 {
 }
 
 .id-line {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   margin-bottom: 12px;
 }
 
 .name-line {
-  font-size: 15.5px;
-  line-height: 1.2;
+  font-size: 16.5px;
+  line-height: 1.25;
   margin-bottom: 20px;
 }
 
@@ -381,8 +418,8 @@ h3 {
 
 .left-pane .identity-summary {
   grid-template-columns: 150px 1fr;
-  gap: 26px;
-  padding: 24px 18px;
+  gap: var(--space-7);
+  padding: var(--space-7) var(--space-6) var(--space-6);
   border: 1px solid var(--card-border);
   border-radius: 7px;
   background: rgba(255, 255, 255, 0.92);
@@ -394,7 +431,8 @@ h3 {
 }
 
 .left-pane .field-row {
-  margin-bottom: 23px;
+  gap: var(--space-12);
+  margin-bottom: var(--space-6);
 }
 
 .left-pane .parents {
@@ -408,8 +446,8 @@ h3 {
 }
 
 .field-row.compact {
-  gap: 44px;
-  margin-bottom: 18px;
+  gap: var(--space-11);
+  margin-bottom: var(--space-5);
 }
 
 .field .field-value {
@@ -629,7 +667,7 @@ h3 {
   border: 1px solid var(--card-border);
   border-radius: 7px;
   background: rgba(255, 255, 255, 0.96);
-  padding: 28px 44px 36px;
+  padding: var(--space-8) var(--space-11) var(--space-10);
   min-height: 724px;
   box-shadow: var(--card-shadow);
   transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
@@ -653,8 +691,8 @@ h3 {
 }
 
 .candidate-card.compact-match {
-  min-height: 206px;
-  padding: 22px 28px 24px;
+  min-height: 232px;
+  padding: var(--space-6) var(--space-7) var(--space-7);
 }
 
 .compact-match .selected-badge {
@@ -663,19 +701,21 @@ h3 {
 }
 
 .compact-match .candidate-top {
-  grid-template-columns: 80px 1fr;
+  grid-template-columns: 84px 1fr;
+  gap: var(--space-5);
 }
 
 .compact-match .card-note {
-  margin-bottom: 18px;
+  margin-bottom: var(--space-5);
 }
 
 .compact-match .candidate-name {
-  margin-top: 9px;
+  margin-top: var(--space-2);
 }
 
 .compact-match .field-row.compact {
-  margin-bottom: 16px;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 
 .compact-match .parents {
@@ -683,9 +723,10 @@ h3 {
 }
 
 .card-note {
-  font-size: 11px;
+  font-size: 12px;
   font-style: italic;
-  margin-bottom: 26px;
+  line-height: 1.45;
+  margin-bottom: var(--space-7);
 }
 
 .selected-badge,
@@ -720,7 +761,7 @@ h3 {
 .candidate-top {
   display: grid;
   grid-template-columns: 80px 1fr;
-  gap: 18px;
+  gap: var(--space-5);
 }
 
 .candidate-top .outline-btn {
@@ -730,13 +771,13 @@ h3 {
 }
 
 .candidate-id {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .candidate-status {
   margin-left: 12px;
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 700;
   vertical-align: middle;
 }
@@ -754,13 +795,14 @@ h3 {
 }
 
 .candidate-name {
-  margin-top: 13px;
-  font-size: 17px;
-  line-height: 1.2;
+  margin-top: var(--space-3);
+  font-size: 18px;
+  line-height: 1.24;
 }
 
 .candidate-card .field-row.compact {
-  margin-bottom: 24px;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
 .highlight {
@@ -816,14 +858,14 @@ h3 {
 .relationship-grid {
   display: grid;
   grid-template-columns: 140px 1fr;
-  gap: 46px;
-  margin-top: 28px;
+  gap: var(--space-12);
+  margin-top: var(--space-7);
 }
 
 .relationship-grid .copy {
-  margin-top: 12px;
+  margin-top: var(--space-3);
   line-height: 2;
-  font-size: 11px;
+  font-size: var(--queue-copy-size);
 }
 
 .detail-grid {

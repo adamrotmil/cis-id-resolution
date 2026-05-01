@@ -528,7 +528,7 @@ function candidateRow(candidate, index, expanded = false) {
             ${buttonComponent("View identity", { variant: "outline", action: "open-identity" })}
           </div>
           <div>
-            <div>${candidateId(candidate)}${statusBadge(candidate.status)}</div>
+            <div class="candidate-heading">${candidateId(candidate)}${statusBadge(candidate.status)}</div>
             <div class="candidate-name">${candidate.name}</div>
             <div class="field-row compact">
               ${field("DOB", candidate.dob, candidate.dob === applicant.dob)}
@@ -593,7 +593,7 @@ function compactCandidate(candidate, index) {
             ${buttonComponent("View identity", { variant: "outline", action: "open-identity" })}
           </div>
           <div>
-            <div>${candidateId(candidate)}${statusBadge(candidate.status)}</div>
+            <div class="candidate-heading">${candidateId(candidate)}${statusBadge(candidate.status)}</div>
             <div class="candidate-name">${candidate.name}</div>
             <div class="field-row compact">
               ${field("DOB", candidate.dob, candidate.dob === applicant.dob)}
