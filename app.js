@@ -8,6 +8,16 @@ const applicant = {
   aliases: ["Maria LOPEZ", "Martina GARCIA", "Miya KAWASAKI"],
 };
 
+const applicantIdentityAliases = [
+  "Maria Lopez",
+  "Martina Maria",
+  "Miya Kawasaki",
+  "María Teresa Ramírez",
+  "Maria T. Garcia",
+  "Teresa Arroyo",
+  "M. Ramírez de Arroyo",
+];
+
 const candidates = [
   {
     id: "A100001678",
@@ -90,6 +100,7 @@ const state = {
   actionSubmitting: "",
   expandedHistoryIndex: 2,
   viewingMode: savedViewingMode === "dark" ? "dark" : "light",
+  aliasesExpanded: false,
 };
 
 const app = document.querySelector("#app");
@@ -945,6 +956,7 @@ function renderIdentityDetail() {
   stopQueueCountdown();
   syncBodyViewingMode(state.viewingMode);
   const candidate = candidates[0];
+  const visibleAliases = state.aliasesExpanded ? applicantIdentityAliases : applicantIdentityAliases.slice(0, 3);
   const content = `
     <nav class="mod-breadcrumb" aria-label="Breadcrumb">
       ${ghostButton("Identity Resolution Queue", { action: "return-queue", className: "breadcrumb-link" })}
@@ -988,10 +1000,11 @@ function renderIdentityDetail() {
           <div class="identity-alias-row">
             <div class="label">ALIASES</div>
             <div class="chips">
-              ${chip("Maria Lopez")}
-              ${chip("Martina Maria")}
-              ${chip("Miya Kawasaki")}
-              ${ghostButton("See more")}
+              ${visibleAliases.map((alias) => chip(alias)).join("")}
+              ${ghostButton(state.aliasesExpanded ? "Show fewer" : `See ${applicantIdentityAliases.length - visibleAliases.length} more`, {
+                action: "toggle-aliases",
+                attrs: { "aria-expanded": String(state.aliasesExpanded) },
+              })}
             </div>
           </div>
           <div class="address-block">
@@ -1281,6 +1294,10 @@ function bindIdentityEvents() {
       event.preventDefault();
       toggleRow(event);
     });
+  });
+  document.querySelector("[data-action='toggle-aliases']")?.addEventListener("click", () => {
+    state.aliasesExpanded = !state.aliasesExpanded;
+    renderIdentityDetail();
   });
   document.querySelector("[data-action='open-photo']")?.addEventListener("click", () => {
     state.modal = "photo";
