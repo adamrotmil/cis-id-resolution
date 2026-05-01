@@ -214,6 +214,16 @@ button {
   color: var(--red);
 }
 
+.countdown-value {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  min-width: 78px;
+}
+
+.countdown-value.expired {
+  color: #9b1c12;
+}
+
 h1,
 h2,
 h3,

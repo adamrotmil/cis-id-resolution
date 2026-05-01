@@ -77,6 +77,7 @@ const state = {
   view: "queue",
   selectedId: null,
   selectedIds: [],
+  queueDeadlineAt: Date.now() + 3.5 * 60 * 60 * 1000,
   primaryName: "",
   aliasChoice: "",
   primaryA: "",
@@ -92,6 +93,36 @@ const state = {
 };
 
 const app = document.querySelector("#app");
+let queueTimerId = null;
+
+function formatQueueCountdown() {
+  const remainingMs = Math.max(0, state.queueDeadlineAt - Date.now());
+  const totalSeconds = Math.ceil(remainingMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (value) => String(value).padStart(2, "0");
+
+  return `${pad(hours)}h:${pad(minutes)}m:${pad(seconds)}s`;
+}
+
+function updateQueueCountdown() {
+  const timer = document.querySelector("[data-countdown='queue-sla']");
+  if (!timer) return;
+  timer.textContent = formatQueueCountdown();
+  timer.classList.toggle("expired", state.queueDeadlineAt <= Date.now());
+}
+
+function startQueueCountdown() {
+  window.clearInterval(queueTimerId);
+  updateQueueCountdown();
+  queueTimerId = window.setInterval(updateQueueCountdown, 1000);
+}
+
+function stopQueueCountdown() {
+  window.clearInterval(queueTimerId);
+  queueTimerId = null;
+}
 
 const portraitAssets = {
   applicant: "assets/portrait-applicant-hi.png",
@@ -439,7 +470,7 @@ function renderQueue() {
           <div><div class="label">PRIORITY</div><div class="value danger">High</div></div>
           <div><div class="label">TICKET #</div><div class="value">123789123</div></div>
           <div><div class="label">FORM TYPE</div><div class="value">I-485</div></div>
-          <div><div class="label">TIME LEFT</div><div class="value danger">03h:30min</div></div>
+          <div><div class="label">TIME LEFT</div><div class="value danger countdown-value" data-countdown="queue-sla" aria-live="polite">${formatQueueCountdown()}</div></div>
         </div>
         ${applicantBlock()}
         <div class="left-rule"></div>
@@ -465,6 +496,7 @@ function renderQueue() {
   `;
 
   app.innerHTML = shell(content) + renderToast() + renderModal();
+  startQueueCountdown();
   bindQueueEvents();
 }
 
@@ -690,6 +722,7 @@ function bindQueueEvents() {
 }
 
 function renderResolve() {
+  stopQueueCountdown();
   syncBodyViewingMode("light");
   if (!selectedCandidates().length) setSelectedIds([candidates[0].id]);
   const selected = selectedCandidates();
@@ -909,6 +942,7 @@ function bindResolveEvents() {
 }
 
 function renderIdentityDetail() {
+  stopQueueCountdown();
   syncBodyViewingMode(state.viewingMode);
   const candidate = candidates[0];
   const content = `
