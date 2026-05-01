@@ -43,6 +43,26 @@ const candidates = [
     parents: ["Andy GUNNARSON", "Rosemary MILES"],
     reason: "This identity has similar A#.",
   },
+  {
+    id: "A100023667",
+    name: "Maria GARCÍA RAMÍREZ",
+    status: "ASYLUM DENIED",
+    dob: "March 16, 1964",
+    fin: "32098343434",
+    cob: "Ecuador",
+    parents: ["Josephina RAMÍREZ", "Jorge GARCÍA"],
+    reason: "This identity has similar DOB and COB.",
+  },
+  {
+    id: "A100086760",
+    name: "María Teresa RAMÍREZ",
+    status: "LPR PENDING",
+    dob: "March 16, 1964",
+    fin: "3210098765",
+    cob: "Ecuador",
+    parents: ["Mia RAMÍREZ", "Jose GARCÍA"],
+    reason: "This identity has similar DOB and COB.",
+  },
 ];
 
 const state = {
@@ -143,12 +163,25 @@ function modShell(content) {
 function portraitAsset(index = 0) {
   if (index === 1) return portraitAssets.julia;
   if (index === 2) return portraitAssets.victoria;
+  if (index === 3) return portraitAssets.thumbs[3];
+  if (index === 4) return portraitAssets.thumbs[4];
   return portraitAssets.main;
 }
 
 function portrait(kind = "applicant", index = 0, classes = "") {
   const src = kind === "applicant" ? portraitAssets.applicant : kind === "large" ? portraitAssets.large : portraitAsset(index);
   return `<img class="portrait ${classes}" src="${src}" alt="" />`;
+}
+
+function statusClass(status = "") {
+  if (status.includes("DENIED")) return "tone-red";
+  if (status.includes("PENDING")) return "tone-orange";
+  return "tone-blue";
+}
+
+function candidateId(candidate) {
+  const matchingId = candidate.id === applicant.id;
+  return `<span class="candidate-id ${matchingId ? "id-highlight" : ""}">${candidate.id}</span>`;
 }
 
 function applicantBlock(compact = false) {
@@ -206,11 +239,20 @@ function renderQueue() {
         ${applicantBlock()}
         <div class="left-rule"></div>
         <section class="empty-actions">
-          <h2>Don't see potential matches?</h2>
-          <p>These are the actions you can take on this identity.</p>
-          <div class="button-row">
-            <button class="primary-btn" type="button">Assign new Arf</button>
-            <button class="primary-btn" type="button">Escalate identity resolution</button>
+          <div class="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22">
+              <circle cx="11" cy="11" r="6.2"></circle>
+              <path d="m15.4 15.4 4.1 4.1"></path>
+              <path d="M11 8.2v5.6M8.2 11h5.6"></path>
+            </svg>
+          </div>
+          <div>
+            <h2>Don't see potential matches?</h2>
+            <p>These are the actions you can take on this identity.</p>
+            <div class="button-row">
+              <button class="secondary-btn" type="button">Assign new A#</button>
+              <button class="primary-btn" type="button">Escalate identity resolution</button>
+            </div>
           </div>
         </section>
       </section>
@@ -246,7 +288,7 @@ function candidateRow(candidate, index, expanded = false) {
             <button class="outline-btn" type="button" data-action="open-identity">View identity</button>
           </div>
           <div>
-            <div><span class="candidate-id">${candidate.id}</span><span class="candidate-status">${candidate.status}</span></div>
+            <div>${candidateId(candidate)}<span class="candidate-status ${statusClass(candidate.status)}">${candidate.status}</span></div>
             <div class="candidate-name">${candidate.name}</div>
             <div class="field-row compact">
               ${field("DOB", candidate.dob, candidate.dob === applicant.dob)}
@@ -301,7 +343,7 @@ function compactCandidate(candidate, index) {
   return `
     <div class="candidate-row" style="margin-top: 0">
       <div class="check-wrap"><button class="checkbox" type="button" aria-label="Select ${candidate.id}"></button></div>
-      <article class="candidate-card" style="min-height: 260px; padding-bottom: 28px">
+      <article class="candidate-card compact-match">
         <p class="card-note">${candidate.reason}</p>
         <div class="candidate-top">
           <div class="portrait-card">
@@ -309,7 +351,7 @@ function compactCandidate(candidate, index) {
             <button class="outline-btn" type="button" data-action="open-identity">View identity</button>
           </div>
           <div>
-            <div><span class="candidate-id">${candidate.id}</span><span class="candidate-status">${candidate.status}</span></div>
+            <div>${candidateId(candidate)}<span class="candidate-status ${statusClass(candidate.status)}">${candidate.status}</span></div>
             <div class="candidate-name">${candidate.name}</div>
             <div class="field-row compact">
               ${field("DOB", candidate.dob, candidate.dob === applicant.dob)}
@@ -333,7 +375,7 @@ function cardData() {
       <div class="card-data-heading">GREEN CARD</div>
       <div></div>
       <div></div>
-          ${field("STATUS", "NOT PRINTED", false, false, "orange")}
+      ${field("STATUS", "NOT PRINTED", false, false, "orange")}
       ${field("EXPIRES", "TBD")}
       <div></div>
       <div class="card-data-heading">EAD CARD</div>
@@ -447,7 +489,7 @@ function selectedIdentityCard() {
           <button class="outline-btn" type="button" data-action="open-identity">View identity</button>
         </div>
         <div>
-          <div><span class="candidate-id">${candidate.id}</span><span class="candidate-status">${candidate.status}</span></div>
+          <div>${candidateId(candidate)}<span class="candidate-status ${statusClass(candidate.status)}">${candidate.status}</span></div>
           <div class="candidate-name">${candidate.name}</div>
           <div class="field-row compact">
             ${field("DOB", candidate.dob, true)}
