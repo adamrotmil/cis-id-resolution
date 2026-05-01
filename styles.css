@@ -1708,13 +1708,39 @@ h3 {
   --blue: #66bee7;
   --orange: #ffb35f;
   --red: #ff7770;
+  --dark-nav: #061827;
+  --dark-panel: #0e1820;
+  --dark-rule: #253845;
   background: #0e1820;
   color: var(--text);
 }
 
+.mod-shell.dark-mode .mod-top-nav {
+  background: linear-gradient(180deg, #071b2c 0%, var(--dark-nav) 100%);
+  border-bottom: 1px solid #1e3546;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 10px 28px rgba(0, 0, 0, 0.26);
+  color: #f3f8fb;
+}
+
+.mod-shell.dark-mode .mod-top-nav .nav-title,
+.mod-shell.dark-mode .mod-top-nav .hello {
+  color: #e8f0f5;
+}
+
+.mod-shell.dark-mode .mod-top-nav .hello::before {
+  background: #d9f6ff;
+  box-shadow: 0 0 0 3px rgba(121, 210, 238, 0.12);
+}
+
 .mod-shell.dark-mode .mod-sub-nav {
-  background: #0e1820;
-  border-bottom-color: #253845;
+  background: var(--dark-panel);
+  border-bottom-color: var(--dark-rule);
+  color: #d7e3ea;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.mod-shell.dark-mode .viewing-mode > span {
+  color: #c3d1da;
 }
 
 .mod-shell.dark-mode .identity-detail-page {
