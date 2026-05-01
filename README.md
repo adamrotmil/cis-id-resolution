@@ -24,22 +24,22 @@ Open `index.html` in a browser.
 
 No build step is required.
 
+Useful demo entry points:
+
+- `index.html` queue/browse mode
+- `index.html#selected` selected duplicate with summary bar
+- `index.html#resolve` resolve workflow start
+- `index.html#resolve-name` primary name selected
+- `index.html#resolve-a` primary name and A-number selected
+- `index.html#photo` photo evidence overlay
+- `index.html#ead` EAD evidence overlay
+- `index.html#pending` return-to-queue pending review state
+
 ## GitHub Pages
 
-This project is ready to serve as a plain static site from GitHub Pages.
+This project is ready to serve as a plain static site from GitHub Pages at:
 
-Recommended repository:
-
-`adamrotmil/cis-id-resolution`
-
-Once the repository exists, upload these files to the default branch:
-
-- `index.html`
-- `styles.css`
-- `app.js`
-- `README.md`
-
-Then enable GitHub Pages from the repository settings, using the default branch root as the source.
+`https://adamrotmil.github.io/cis-id-resolution/`
 
 ## Demo Framing
 

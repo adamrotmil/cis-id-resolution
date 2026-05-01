@@ -61,6 +61,24 @@ const state = {
 
 const app = document.querySelector("#app");
 
+const portraitAssets = {
+  applicant: "assets/applicant-photo.png",
+  main: "assets/photo-main-clean.png",
+  julia: "assets/photo-thumb-02.png",
+  victoria: "assets/photo-thumb-03.png",
+  large: "assets/identity-photo-large.png",
+  thumbs: [
+    "assets/photo-thumb-01.png",
+    "assets/photo-thumb-02.png",
+    "assets/photo-thumb-03.png",
+    "assets/photo-thumb-04.png",
+    "assets/photo-thumb-05.png",
+    "assets/photo-thumb-06.png",
+    "assets/photo-thumb-07.png",
+    "assets/photo-thumb-08.png",
+  ],
+};
+
 function shell(content, options = {}) {
   const crumbs = options.crumbs
     ? `<div class="sub-nav">${options.crumbs
@@ -73,7 +91,7 @@ function shell(content, options = {}) {
   return `
     <div class="app-shell">
       <header class="top-nav">
-        <div class="brand"><span class="seal" aria-hidden="true"></span><span>PCIS</span></div>
+        <div class="brand"><img class="seal" src="assets/pcis-seal.png" alt="" /><span>PCIS</span></div>
         <div class="nav-spacer"></div>
         <div class="nav-title">IDENTITY RESOLUTION QUEUE</div>
         <div class="hello">HELLO, DANIEL</div>
@@ -84,8 +102,15 @@ function shell(content, options = {}) {
   `;
 }
 
-function portraitClass(index = 0) {
-  return index === 1 ? "alt-one" : index === 2 ? "alt-two" : "";
+function portraitAsset(index = 0) {
+  if (index === 1) return portraitAssets.julia;
+  if (index === 2) return portraitAssets.victoria;
+  return portraitAssets.main;
+}
+
+function portrait(kind = "applicant", index = 0, classes = "") {
+  const src = kind === "applicant" ? portraitAssets.applicant : kind === "large" ? portraitAssets.large : portraitAsset(index);
+  return `<img class="portrait ${classes}" src="${src}" alt="" />`;
 }
 
 function applicantBlock(compact = false) {
@@ -94,7 +119,7 @@ function applicantBlock(compact = false) {
       <h3 class="applicant-title">Applicant's information</h3>
       <div class="identity-summary">
         <div class="portrait-card">
-          <div class="portrait" aria-label="Applicant portrait"></div>
+          ${portrait("applicant")}
           <button class="outline-btn" type="button">View application</button>
         </div>
         <div class="identity-copy">
@@ -119,10 +144,10 @@ function applicantBlock(compact = false) {
   `;
 }
 
-function field(label, value, highlighted = false) {
+function field(label, value, highlighted = false, info = false, tone = "") {
   return `
-    <div class="field">
-      <div class="label">${label}</div>
+    <div class="field ${tone ? `tone-${tone}` : ""}">
+      <div class="label">${label}${info ? `<span class="info-dot">i</span>` : ""}</div>
       <div class="field-value">${highlighted ? `<span class="highlight">${value}</span>` : value}</div>
     </div>
   `;
@@ -179,7 +204,7 @@ function candidateRow(candidate, index, expanded = false) {
         <p class="card-note">${candidate.reason}</p>
         <div class="candidate-top">
           <div class="portrait-card">
-            <div class="portrait small ${portraitClass(index)}"></div>
+            ${portrait("candidate", index, "small")}
             <button class="outline-btn" type="button" data-action="open-photo">View identity</button>
           </div>
           <div>
@@ -190,34 +215,41 @@ function candidateRow(candidate, index, expanded = false) {
               ${field("FIN", candidate.fin, candidate.fin === applicant.fin)}
               ${field("COB", candidate.cob, candidate.cob === applicant.cob)}
             </div>
-            <div class="parents">
+            <div class="parents match-parents">
               <div class="label">PARENTS</div>
               <div class="copy">${candidate.parents
                 .map((parent) => `<span class="highlight">${parent}</span>`)
                 .join("<br />")}</div>
             </div>
-            <div class="parents">
+            <div class="aliases candidate-aliases">
               <div class="label">ALIASES</div>
               <div class="chips">${candidate.aliases.map((alias) => `<span class="chip">${alias}</span>`).join("")}</div>
             </div>
+            <div class="relationship-grid">
+              <div>
+                <div class="label">CHILDREN</div>
+                <div class="copy">${candidate.children
+                  .map((child) => `<button class="link" type="button">${child}</button>`)
+                  .join("<br />")}</div>
+              </div>
+              <div>
+                <div class="label">SPOUSE</div>
+                <div class="copy"><button class="link" type="button">${candidate.spouse}</button></div>
+              </div>
+            </div>
             <div class="detail-grid">
               <div class="detail-section-title">BIOGRAPHIC DATA</div>
-              ${field("COB", candidate.cob)}
-              ${field("POE", "Miami International (MIA)")}
+              ${field("COB", candidate.cob, false, true)}
+              ${field("POE", "Miami International (MIA)", false, true)}
               ${field("SSN", "123-45-6789")}
-              ${field("COC", "Ecuador")}
-              ${field("DOE", "June 18, 2015")}
+              ${field("COC", "Ecuador", false, true)}
+              ${field("DOE", "June 18, 2015", false, true)}
               ${field("PASSPORT #", "41234567")}
               ${field("GENDER", "Female")}
-              ${field("DFO", "August 10, 2016")}
+              ${field("DFO", "August 10, 2016", false, true)}
               ${field("FBI#", "285927400")}
               <div class="detail-section-title">CARD DATA</div>
-              ${field("GREEN CARD", "NOT PRINTED")}
-              ${field("EAD CARD", "PRINTED")}
-              <div class="field">
-                <div class="label">CARD</div>
-                <div class="field-value"><button class="link" type="button" data-action="open-ead">View card</button></div>
-              </div>
+              ${cardData()}
             </div>
             ${candidate.pending ? pendingRibbon() : ""}
           </div>
@@ -235,7 +267,7 @@ function compactCandidate(candidate, index) {
         <p class="card-note">${candidate.reason}</p>
         <div class="candidate-top">
           <div class="portrait-card">
-            <div class="portrait small ${portraitClass(index)}"></div>
+            ${portrait("candidate", index, "small")}
             <button class="outline-btn" type="button">View identity</button>
           </div>
           <div>
@@ -253,6 +285,25 @@ function compactCandidate(candidate, index) {
           </div>
         </div>
       </article>
+    </div>
+  `;
+}
+
+function cardData() {
+  return `
+    <div class="card-data-group">
+      <div class="card-data-heading">GREEN CARD</div>
+      <div></div>
+      <div></div>
+      ${field("STATUS", "NOT PRINTED", false, false, "orange")}
+      ${field("EXPIRES", "TBD")}
+      <div></div>
+      <div class="card-data-heading">EAD CARD</div>
+      <div class="field-value card-link"><button class="link" type="button" data-action="open-ead">View card</button></div>
+      <div></div>
+      ${field("STATUS", "PRINTED", false, false, "blue")}
+      ${field("EXPIRES", "December 10, 2019")}
+      ${field("RECEIPT #", "89765543182754", false, true)}
     </div>
   `;
 }
@@ -294,6 +345,11 @@ function pendingRibbon() {
   `;
 }
 
+function setView(view, hash = "") {
+  state.view = view;
+  if (hash) history.replaceState(null, "", hash);
+}
+
 function bindQueueEvents() {
   document.querySelectorAll("[data-action='toggle-select']").forEach((button) => {
     button.addEventListener("click", () => {
@@ -306,7 +362,7 @@ function bindQueueEvents() {
     renderQueue();
   });
   document.querySelector("[data-action='resolve']")?.addEventListener("click", () => {
-    state.view = "resolve";
+    setView("resolve", "#resolve");
     renderResolve();
   });
   document.querySelector("[data-action='open-photo']")?.addEventListener("click", () => {
@@ -347,7 +403,7 @@ function selectedIdentityCard() {
       <p class="card-note">${candidate.reason.replace("Parents", "PARENT 1 and PARENT 2")}</p>
       <div class="compact-card">
         <div class="portrait-card">
-          <div class="portrait small"></div>
+          ${portrait("candidate", 0, "small")}
           <button class="outline-btn" type="button" data-action="open-photo">View identity</button>
         </div>
         <div>
@@ -358,7 +414,7 @@ function selectedIdentityCard() {
             ${field("FIN", candidate.fin, true)}
             ${field("COB", candidate.cob, true)}
           </div>
-          <div class="parents">
+          <div class="parents match-parents">
             <div class="label">PARENTS</div>
             <div class="copy"><span class="highlight">Mia Ramírez</span><br /><span class="highlight">Jose García</span></div>
           </div>
@@ -500,6 +556,7 @@ function bindResolveEvents() {
       state.selectedId = null;
       state.view = "queue";
       state.toast = "Resolution package sent";
+      history.replaceState(null, "", "#pending");
       renderQueue();
     }, 850);
   });
@@ -528,14 +585,16 @@ function renderModal() {
 }
 
 function photoOverlay() {
-  const thumbs = Array.from({ length: 8 }, (_, index) => `<div class="portrait tiny thumb ${index === 0 ? "selected" : portraitClass(index % 3)}"></div>`).join("");
+  const thumbs = portraitAssets.thumbs
+    .map((src, index) => `<img class="portrait tiny thumb ${index === 0 ? "selected" : ""}" src="${src}" alt="" />`)
+    .join("");
   return `
     <div class="overlay-backdrop">
       <div class="photo-modal" role="dialog" aria-modal="true" aria-label="Photo viewer">
         <button class="modal-close" type="button" data-action="close-modal">×</button>
         <div class="photo-title">10 photos <button class="link" type="button">View as a grid</button></div>
         <div class="photo-viewer">
-          <div class="portrait large-photo"></div>
+          <img class="portrait large-photo" src="${portraitAssets.large}" alt="" />
           <div class="photo-meta">
             <div><div class="label">DATE TAKEN</div><div class="value">March 15, 2019</div></div>
             <div><div class="label">RECEIPT #</div><div class="value">IOE1234876542</div></div>
@@ -559,11 +618,9 @@ function eadOverlay() {
       <div class="ead-panel" role="dialog" aria-modal="true" aria-label="EAD card">
         <button class="modal-close" type="button" data-action="close-modal">×</button>
         <h2>EAD card</h2>
-        <div class="ead-art">
-          <div class="ead-card-copy">SPECIMEN<br />TEST V<br />C09&nbsp;&nbsp;&nbsp;SRC0000000773</div>
-        </div>
+        <img class="ead-art" src="assets/ead-front.png" alt="" />
         <div class="ead-label">EAD Front</div>
-        <div class="ead-art back"></div>
+        <img class="ead-art back" src="assets/ead-back.png" alt="" />
         <div class="ead-label">EAD Back</div>
       </div>
     </div>
@@ -577,4 +634,28 @@ function bindModalEvents() {
   });
 }
 
-renderQueue();
+function hydrateFromHash() {
+  const hash = window.location.hash;
+  if (hash === "#selected") state.selectedId = candidates[0].id;
+  if (hash === "#resolve" || hash === "#resolve-name" || hash === "#resolve-a") {
+    state.view = "resolve";
+    state.selectedId = candidates[0].id;
+  }
+  if (hash === "#resolve-name" || hash === "#resolve-a") {
+    state.primaryName = applicant.name;
+    state.aliasChoice = "yes";
+  }
+  if (hash === "#resolve-a") {
+    state.primaryA = applicant.id;
+  }
+  if (hash === "#photo") state.modal = "photo";
+  if (hash === "#ead") state.modal = "ead";
+  if (hash === "#pending") {
+    state.submitted = true;
+    state.selectedId = null;
+    state.toast = "Resolution package sent";
+  }
+}
+
+hydrateFromHash();
+state.view === "resolve" ? renderResolve() : renderQueue();
