@@ -158,16 +158,31 @@ button {
 .hello {
   margin-left: 32px;
   display: flex;
-  gap: 8px;
+  gap: 9px;
   align-items: center;
+  line-height: 1;
+  letter-spacing: 0.04em;
 }
 
 .hello::before {
-  content: "";
-  width: 9px;
-  height: 9px;
+  content: none;
+}
+
+.user-avatar {
+  width: 26px;
+  height: 26px;
+  display: block;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.78);
   border-radius: 50%;
-  background: white;
+  background: #d7e5ec;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+  object-fit: cover;
+}
+
+.hello .user-avatar {
+  width: 24px;
+  height: 24px;
 }
 
 .sub-nav {
@@ -1739,8 +1754,8 @@ h3 {
   color: #f4f8fb;
 }
 
-.mod-shell.dark-mode .mod-top-nav .hello::before {
-  background: #d9f6ff;
+.mod-shell.dark-mode .mod-top-nav .user-avatar {
+  border-color: rgba(168, 240, 255, 0.76);
   box-shadow: 0 0 0 3px rgba(168, 240, 255, 0.13);
 }
 
@@ -2049,14 +2064,22 @@ h3 {
 }
 
 .stacks-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   justify-self: end;
   font-size: 12px;
   font-weight: 700;
 }
 
-.stacks-user span {
+.stacks-user > span:not(.stacks-user-name) {
   opacity: 0.72;
-  margin: 0 6px;
+  margin: 0 2px;
+}
+
+.stacks-user-name {
+  opacity: 1;
+  white-space: nowrap;
 }
 
 .stacks-page {

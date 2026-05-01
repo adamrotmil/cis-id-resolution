@@ -1014,7 +1014,7 @@ function shell(content, options = {}) {
         <div class="brand"><img class="seal" src="assets/dhs-seal.png" alt="" /><span>PCIS</span></div>
         <div class="nav-spacer"></div>
         <div class="nav-title">IDENTITY RESOLUTION QUEUE</div>
-        <div class="hello">HELLO, DANIEL</div>
+        <div class="hello"><img class="user-avatar" src="assets/daniel-avatar.jpg" alt="" /><span>HELLO, DANIEL</span></div>
       </header>
       ${crumbs}
       ${content}
@@ -1034,7 +1034,7 @@ function modShell(content) {
         <div class="brand"><img class="seal" src="assets/dhs-seal.png" alt="" /><span>PCIS</span></div>
         <div class="nav-spacer"></div>
         <div class="nav-title">IDENTITY RESOLUTION QUEUE</div>
-        <div class="hello">HELLO, DANIEL</div>
+        <div class="hello"><img class="user-avatar" src="assets/daniel-avatar.jpg" alt="" /><span>HELLO, DANIEL</span></div>
       </header>
       <div class="mod-sub-nav">
         <div class="viewing-mode">
@@ -2514,7 +2514,7 @@ function renderStacks() {
           <input type="search" placeholder="Search for files..." />
           ${icon("search")}
         </label>
-        <div class="stacks-user">Hello, Daniel <span>|</span> Logout</div>
+        <div class="stacks-user"><img class="user-avatar" src="assets/daniel-avatar.jpg" alt="" /><span class="stacks-user-name">Hello, Daniel</span><span>|</span> Logout</div>
       </header>
       <main class="stacks-page">
         <div class="stacks-meta-row">
@@ -2686,7 +2686,7 @@ function renderRails() {
           <input type="search" placeholder="Search by barcode, A#, receipt, or shelf..." />
           ${icon("barcode_scanner")}
         </label>
-        <div class="stacks-user">Hello, Daniel <span>|</span> Logout</div>
+        <div class="stacks-user"><img class="user-avatar" src="assets/daniel-avatar.jpg" alt="" /><span class="stacks-user-name">Hello, Daniel</span><span>|</span> Logout</div>
       </header>
       <main class="rails-page">
         <div class="stacks-meta-row">
