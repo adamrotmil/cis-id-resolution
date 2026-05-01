@@ -85,6 +85,7 @@ const state = {
   submitting: false,
   submitted: false,
   toast: "",
+  actionSubmitting: "",
   expandedHistoryIndex: 2,
   viewingMode: savedViewingMode === "dark" ? "dark" : "light",
 };
@@ -390,8 +391,8 @@ function renderQueue() {
             <h2>Don't see potential matches?</h2>
             <p>These are the actions you can take on this identity.</p>
             <div class="button-row">
-              ${buttonComponent("Assign new A#", { variant: "secondary" })}
-              ${buttonComponent("Escalate identity resolution", { variant: "primary" })}
+              ${buttonComponent("Assign new A#", { variant: "secondary", action: "open-assign-a" })}
+              ${buttonComponent("Escalate identity resolution", { variant: "primary", action: "open-escalate" })}
             </div>
           </div>
         </section>
@@ -582,6 +583,14 @@ function bindQueueEvents() {
   document.querySelector("[data-action='resolve']")?.addEventListener("click", () => {
     setView("resolve", "#resolve");
     renderResolve();
+  });
+  document.querySelector("[data-action='open-assign-a']")?.addEventListener("click", () => {
+    state.modal = "assign-a";
+    renderQueue();
+  });
+  document.querySelector("[data-action='open-escalate']")?.addEventListener("click", () => {
+    state.modal = "escalate";
+    renderQueue();
   });
   document.querySelectorAll("[data-action='open-identity']").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1134,11 +1143,19 @@ function bindIdentityEvents() {
 
 function renderToast() {
   if (!state.toast) return "";
+  const toast =
+    typeof state.toast === "string"
+      ? {
+          title: state.toast,
+          body: "1 linked identity candidate and your notes were sent to a final evaluator.",
+          status: "Pending final resolution",
+        }
+      : state.toast;
   return `
     <div class="toast" role="status">
-      <h3>${state.toast}</h3>
-      <p class="helper">1 linked identity candidate and your notes were sent to a final evaluator.</p>
-      <p class="helper"><strong>Status:</strong> Pending final resolution</p>
+      <h3>${toast.title}</h3>
+      <p class="helper">${toast.body}</p>
+      ${toast.status ? `<p class="helper"><strong>Status:</strong> ${toast.status}</p>` : ""}
     </div>
   `;
 }
@@ -1147,7 +1164,94 @@ function renderModal() {
   if (state.modal === "photo") return photoOverlay();
   if (state.modal === "ead") return eadOverlay();
   if (state.modal === "green-card") return greenCardOverlay();
+  if (state.modal === "assign-a") return assignANumberOverlay();
+  if (state.modal === "escalate") return escalateResolutionOverlay();
   return "";
+}
+
+function actionRecordSummary() {
+  return `
+    <div class="action-record-summary">
+      <img src="${portraitAssets.applicant}" alt="" />
+      <div>
+        <div class="label">TARGET APPLICANT</div>
+        <strong>${applicant.name}</strong>
+        <div class="action-record-meta">
+          <span>${applicant.dob}</span>
+          <span>FIN ${applicant.fin}</span>
+          <span>COB ${applicant.cob}</span>
+        </div>
+      </div>
+      ${badge("High priority", { className: "status-badge" })}
+    </div>
+  `;
+}
+
+function assignANumberOverlay() {
+  const submitting = state.actionSubmitting === "assign-a";
+  return `
+    <div class="overlay-backdrop">
+      <div class="action-modal" role="dialog" aria-modal="true" aria-labelledby="assign-a-title">
+        ${iconButton("close", "Close assign A-number dialog", { action: "close-modal", className: "modal-close" })}
+        <div class="modal-kicker">NO MATCH PATH</div>
+        <h2 id="assign-a-title">Assign new A-number</h2>
+        <p class="helper">Use this when no listed candidate is a suspected duplicate and the incoming identity should continue as a separate record.</p>
+        ${actionRecordSummary()}
+        <section class="action-modal-section">
+          <h3>Assignment preview</h3>
+          <div class="action-data-grid">
+            <div><div class="label">RESERVED A#</div><strong>A100089442</strong></div>
+            <div><div class="label">REVIEW STATUS</div><strong>Supervisor confirmation required</strong></div>
+            <div><div class="label">AUDIT REASON</div><strong>No candidate selected</strong></div>
+          </div>
+        </section>
+        <label class="action-note-label" for="assign-note">Assignment note</label>
+        <textarea id="assign-note" class="notes-field action-notes" placeholder="Example: Reviewed suggested matches; DOB and parent evidence does not support linking."></textarea>
+        <div class="modal-helper-row">
+          ${icon("info", "modal-helper-icon")}
+          <span>This queues the A-number assignment package. It does not modify any potential match records.</span>
+        </div>
+        <div class="modal-actions">
+          ${ghostButton("Cancel", { action: "close-modal" })}
+          ${buttonComponent(submitting ? "Reserving..." : "Reserve A# for review", { variant: "primary", action: "confirm-assign-a", disabled: submitting })}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function escalateResolutionOverlay() {
+  const submitting = state.actionSubmitting === "escalate";
+  return `
+    <div class="overlay-backdrop">
+      <div class="action-modal" role="dialog" aria-modal="true" aria-labelledby="escalate-title">
+        ${iconButton("close", "Close escalation dialog", { action: "close-modal", className: "modal-close" })}
+        <div class="modal-kicker">MANUAL REVIEW PATH</div>
+        <h2 id="escalate-title">Escalate identity resolution</h2>
+        <p class="helper">Use this when the evidence is not strong enough to link records or assign a new A-number without specialist review.</p>
+        ${actionRecordSummary()}
+        <section class="action-modal-section">
+          <h3>Escalation package</h3>
+          <div class="evidence-chip-row">
+            ${chip("No candidate selected", "evidence-chip")}
+            ${chip("Potential DOB overlap", "evidence-chip")}
+            ${chip("Parent evidence mixed", "evidence-chip")}
+            ${chip("A# conflict possible", "evidence-chip")}
+          </div>
+        </section>
+        <label class="action-note-label" for="escalation-note">Escalation note</label>
+        <textarea id="escalation-note" class="notes-field action-notes" placeholder="Example: Candidate data has partial overlap, but confidence is not sufficient for officer-level resolution."></textarea>
+        <div class="modal-helper-row warning">
+          ${icon("priority_high", "modal-helper-icon")}
+          <span>The queue item will remain open and be marked Pending specialist review.</span>
+        </div>
+        <div class="modal-actions">
+          ${ghostButton("Cancel", { action: "close-modal" })}
+          ${buttonComponent(submitting ? "Sending..." : "Send escalation", { variant: "primary", action: "confirm-escalate", disabled: submitting })}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function photoOverlay() {
@@ -1225,11 +1329,40 @@ function greenCardOverlay() {
 }
 
 function bindModalEvents() {
-  document.querySelector("[data-action='close-modal']")?.addEventListener("click", () => {
+  document.querySelectorAll("[data-action='close-modal']").forEach((button) => button.addEventListener("click", () => {
     state.modal = null;
+    state.actionSubmitting = "";
     if (state.view === "resolve") renderResolve();
     else if (state.view === "identity") renderIdentityDetail();
     else renderQueue();
+  }));
+  document.querySelector("[data-action='confirm-assign-a']")?.addEventListener("click", () => {
+    state.actionSubmitting = "assign-a";
+    renderQueue();
+    window.setTimeout(() => {
+      state.modal = null;
+      state.actionSubmitting = "";
+      state.toast = {
+        title: "A-number assignment queued",
+        body: "A100089442 was reserved and the assignment package was sent for supervisor confirmation.",
+        status: "Pending supervisor confirmation",
+      };
+      renderQueue();
+    }, 650);
+  });
+  document.querySelector("[data-action='confirm-escalate']")?.addEventListener("click", () => {
+    state.actionSubmitting = "escalate";
+    renderQueue();
+    window.setTimeout(() => {
+      state.modal = null;
+      state.actionSubmitting = "";
+      state.toast = {
+        title: "Identity resolution escalated",
+        body: "The applicant record and unresolved match signals were sent to the specialist review queue.",
+        status: "Pending specialist review",
+      };
+      renderQueue();
+    }, 650);
   });
 }
 
