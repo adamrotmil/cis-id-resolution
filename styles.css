@@ -329,6 +329,7 @@ h3 {
 }
 
 .info-dot {
+  position: relative;
   width: 10px;
   height: 10px;
   display: inline-grid;
@@ -339,6 +340,54 @@ h3 {
   color: var(--teal-ink);
   font-size: 7px;
   line-height: 1;
+  cursor: help;
+  outline: 0;
+}
+
+.info-dot::after,
+.info-dot::before {
+  position: absolute;
+  left: 50%;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
+  z-index: 80;
+}
+
+.info-dot::after {
+  content: attr(data-tooltip);
+  bottom: calc(100% + 9px);
+  width: 220px;
+  padding: 9px 10px;
+  border-radius: 4px;
+  background: #1f2933;
+  color: white;
+  box-shadow: 0 8px 18px rgba(0, 20, 32, 0.22);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.35;
+  text-align: left;
+  text-transform: none;
+  transform: translate(-50%, 4px);
+}
+
+.info-dot::before {
+  content: "";
+  bottom: calc(100% + 4px);
+  border: 5px solid transparent;
+  border-top-color: #1f2933;
+  transform: translate(-50%, 4px);
+}
+
+.info-dot:hover::after,
+.info-dot:hover::before,
+.info-dot:focus-visible::after,
+.info-dot:focus-visible::before {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
 }
 
 .parents,
@@ -1271,6 +1320,16 @@ h3 {
 
 .mod-shell.dark-mode .tone-ready .field-value {
   color: #72d48f;
+}
+
+.mod-shell.dark-mode .info-dot::after {
+  background: #e8f0f5;
+  color: #10202a;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.34);
+}
+
+.mod-shell.dark-mode .info-dot::before {
+  border-top-color: #e8f0f5;
 }
 
 .summary-bar {

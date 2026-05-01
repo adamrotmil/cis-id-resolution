@@ -135,6 +135,28 @@ const timelineIcons = {
   "INTERNATIONAL SEARCH": "travel_explore",
 };
 
+const tooltipCopy = {
+  COA: "COA: class of admission for the applicant's current status.",
+  COB: "COB: country of birth.",
+  COC: "COC: country of citizenship.",
+  POE: "POE: port of entry where the applicant entered or was processed.",
+  DOE: "DOE: date of entry recorded for this benefit.",
+  DFO: "DFO: date of first encounter for this identity.",
+  "RECEIPT #": "Receipt number associated with this card or case record.",
+  "SITE CODE": "Internal office or production site code for this document.",
+  "PROVISION OF LAW": "Legal category used to authorize this document.",
+};
+
+function escapeAttribute(value = "") {
+  return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("'", "&#39;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
+function infoTooltip(label) {
+  const copy = tooltipCopy[label] || `${label}: reference information for this field.`;
+  const tooltip = escapeAttribute(copy);
+  return `<span class="info-dot" tabindex="0" aria-label="${tooltip}" data-tooltip="${tooltip}">i</span>`;
+}
+
 function shell(content, options = {}) {
   const crumbs = options.crumbs
     ? `<div class="sub-nav">${options.crumbs
@@ -246,7 +268,7 @@ function applicantBlock(compact = false) {
 function field(label, value, highlighted = false, info = false, tone = "") {
   return `
     <div class="field ${tone ? `tone-${tone}` : ""}">
-      <div class="label">${label}${info ? `<span class="info-dot">i</span>` : ""}</div>
+      <div class="label">${label}${info ? infoTooltip(label) : ""}</div>
       <div class="field-value">${highlighted ? `<span class="highlight">${value}</span>` : value}</div>
     </div>
   `;
@@ -803,7 +825,7 @@ function identityNameField(label, value, variant = "") {
 function identityFact(label, value, info = false, link = "") {
   return `
     <div>
-      <div class="label">${label}${info ? `<span class="info-dot">i</span>` : ""}</div>
+      <div class="label">${label}${info ? infoTooltip(label) : ""}</div>
       <div class="identity-fact-value">${value}</div>
       ${link ? `<button class="link" type="button">${link}</button>` : ""}
     </div>
