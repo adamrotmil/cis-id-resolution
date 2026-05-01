@@ -123,6 +123,10 @@ const state = {
 const app = document.querySelector("#app");
 let queueTimerId = null;
 let toastTimerId = null;
+const applicationPacketPages = Array.from(
+  { length: 26 },
+  (_, index) => `assets/application-packet/page-${String(index + 1).padStart(2, "0")}.jpg`,
+);
 
 function formatQueueCountdown() {
   const remainingMs = Math.max(0, state.queueDeadlineAt - Date.now());
@@ -1024,6 +1028,10 @@ function shell(content, options = {}) {
 
 function syncBodyViewingMode(mode = "light") {
   document.body.dataset.viewingMode = mode;
+}
+
+function syncModalLock() {
+  document.body.classList.toggle("has-modal", Boolean(state.modal));
 }
 
 function modShell(content) {
@@ -2811,6 +2819,7 @@ function bindRailsEvents() {
 }
 
 function renderModal() {
+  syncModalLock();
   if (state.modal === "application") return applicationOverlay();
   if (state.modal === "photo") return photoOverlay();
   if (state.modal === "ead") return eadOverlay();
@@ -2924,6 +2933,16 @@ function resolvePackageSummary() {
 }
 
 function applicationOverlay() {
+  const pages = applicationPacketPages
+    .map(
+      (src, index) => `
+        <figure class="application-page">
+          <img src="${src}" alt="I-485 application packet page ${index + 1}" loading="${index < 2 ? "eager" : "lazy"}" />
+          <figcaption>Page ${index + 1} of ${applicationPacketPages.length}</figcaption>
+        </figure>
+      `,
+    )
+    .join("");
   return `
     <div class="overlay-backdrop">
       <div class="application-modal" role="dialog" aria-modal="true" aria-labelledby="application-title">
@@ -2936,15 +2955,13 @@ function applicationOverlay() {
           </div>
           ${badge("Sample packet", { className: "document-status ready" })}
         </div>
-        <div class="application-frame-wrap">
-          <iframe
-            class="application-frame"
-            title="I-485 application packet PDF"
-            src="assets/i-485-application-packet.pdf#view=FitH"
-          ></iframe>
+        <div class="application-frame-wrap" tabindex="0" aria-label="Scrollable I-485 application packet pages">
+          <div class="application-page-stack">
+            ${pages}
+          </div>
         </div>
         <div class="application-modal-footer">
-          <span>Scroll inside the document to review the packet pages.</span>
+          <span>Scroll inside the document frame to review all ${applicationPacketPages.length} packet pages.</span>
           ${ghostButton("Close", { action: "close-modal" })}
         </div>
       </div>
