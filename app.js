@@ -65,6 +65,14 @@ const candidates = [
   },
 ];
 
+const savedViewingMode = (() => {
+  try {
+    return localStorage.getItem("cisViewingMode") || "light";
+  } catch {
+    return "light";
+  }
+})();
+
 const state = {
   view: "queue",
   selectedId: null,
@@ -78,6 +86,7 @@ const state = {
   submitted: false,
   toast: "",
   expandedHistoryIndex: 2,
+  viewingMode: savedViewingMode === "dark" ? "dark" : "light",
 };
 
 const app = document.querySelector("#app");
@@ -149,9 +158,14 @@ function shell(content, options = {}) {
   `;
 }
 
+function syncBodyViewingMode(mode = "light") {
+  document.body.dataset.viewingMode = mode;
+}
+
 function modShell(content) {
+  const isDark = state.viewingMode === "dark";
   return `
-    <div class="mod-shell">
+    <div class="mod-shell ${isDark ? "dark-mode" : "light-mode"}">
       <header class="mod-top-nav">
         <div class="brand"><img class="seal" src="assets/dhs-seal.png" alt="" /><span>CIS Mod</span></div>
         <div class="nav-spacer"></div>
@@ -161,8 +175,8 @@ function modShell(content) {
       <div class="mod-sub-nav">
         <div class="viewing-mode">
           <span>Viewing Mode</span>
-          <button class="mode-tab active" type="button">Light</button>
-          <button class="mode-tab" type="button">Dark</button>
+          <button class="mode-tab ${isDark ? "" : "active"}" type="button" data-action="set-viewing-mode" data-mode="light" aria-pressed="${!isDark}">Light</button>
+          <button class="mode-tab ${isDark ? "active" : ""}" type="button" data-action="set-viewing-mode" data-mode="dark" aria-pressed="${isDark}">Dark</button>
         </div>
         <div class="mod-actions">
           <button class="outline-btn" type="button">View Applicant's Action history</button>
@@ -239,6 +253,7 @@ function field(label, value, highlighted = false, info = false, tone = "") {
 }
 
 function renderQueue() {
+  syncBodyViewingMode("light");
   const selected = Boolean(state.selectedId);
   const pendingCandidate = state.submitted ? { ...candidates[0], pending: true } : candidates[0];
   const content = `
@@ -473,6 +488,7 @@ function bindQueueEvents() {
 }
 
 function renderResolve() {
+  syncBodyViewingMode("light");
   const valid = Boolean(state.primaryName && state.primaryA);
   const content = `
     <main class="resolve-page">
@@ -668,6 +684,7 @@ function bindResolveEvents() {
 }
 
 function renderIdentityDetail() {
+  syncBodyViewingMode(state.viewingMode);
   const candidate = candidates[0];
   const content = `
     <main class="identity-detail-page">
@@ -850,7 +867,7 @@ function backgroundRow(row, index) {
   const expanded = state.expandedHistoryIndex === index;
   return `
     ${showYear ? `<h3 class="timeline-year">${row.year}</h3>` : ""}
-    <article class="timeline-card ${expanded ? "expanded" : ""}" data-history-index="${index}" aria-expanded="${expanded}">
+    <article class="timeline-card ${expanded ? "expanded" : ""}" data-history-index="${index}" role="button" tabindex="0" aria-expanded="${expanded}">
       <div class="timeline-accent ${row.accent}"></div>
       <div class="timeline-icon" aria-hidden="true">
         <span class="material-symbols-outlined">${icon}</span>
@@ -957,12 +974,31 @@ function expandedTimelineDetail(row, index) {
 }
 
 function bindIdentityEvents() {
+  document.querySelectorAll("[data-action='set-viewing-mode']").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.viewingMode = button.dataset.mode === "dark" ? "dark" : "light";
+      try {
+        localStorage.setItem("cisViewingMode", state.viewingMode);
+      } catch {
+        // Ignore storage failures; the in-page switch still works.
+      }
+      history.replaceState(null, "", state.viewingMode === "dark" ? "#identity-dark" : "#identity");
+      renderIdentityDetail();
+    });
+  });
   document.querySelectorAll(".timeline-card").forEach((row) => {
-    row.addEventListener("click", (event) => {
+    const toggleRow = (event) => {
       if (event.target.closest?.(".timeline-expanded .link")) return;
       const index = Number(row.dataset.historyIndex);
       state.expandedHistoryIndex = state.expandedHistoryIndex === index ? null : index;
       renderIdentityDetail();
+    };
+    row.addEventListener("click", toggleRow);
+    row.addEventListener("keydown", (event) => {
+      if (event.target !== row) return;
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      toggleRow(event);
     });
   });
   document.querySelector("[data-action='open-photo']")?.addEventListener("click", () => {
@@ -1088,9 +1124,10 @@ function hydrateFromHash() {
     state.view = "resolve";
     state.selectedId = candidates[0].id;
   }
-  if (hash === "#identity" || hash === "#photo" || hash === "#green-card") {
+  if (hash === "#identity" || hash === "#identity-dark" || hash === "#photo" || hash === "#green-card") {
     state.view = "identity";
   }
+  if (hash === "#identity-dark") state.viewingMode = "dark";
   if (hash === "#resolve-name" || hash === "#resolve-a") {
     state.primaryName = applicant.name;
     state.aliasChoice = "yes";

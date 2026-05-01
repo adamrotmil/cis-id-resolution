@@ -31,6 +31,10 @@ body {
   font-size: 12px;
 }
 
+body[data-viewing-mode="dark"] {
+  background: #0b141c;
+}
+
 button,
 input,
 textarea {
@@ -727,6 +731,10 @@ h3 {
   border-bottom: 2px solid white;
 }
 
+.mode-tab:hover {
+  color: #d8f7ff;
+}
+
 .mod-actions {
   margin-left: auto;
   display: flex;
@@ -1145,6 +1153,124 @@ h3 {
   display: flex;
   gap: 18px;
   margin-top: 16px;
+}
+
+.mod-shell.dark-mode {
+  --text: #e8f0f5;
+  --muted: #a8b8c4;
+  --teal-ink: #79d2ee;
+  --blue: #66bee7;
+  --orange: #ffb35f;
+  --red: #ff7770;
+  background: #0e1820;
+  color: var(--text);
+}
+
+.mod-shell.dark-mode .mod-sub-nav {
+  background: #17495b;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mod-shell.dark-mode .identity-detail-page {
+  background:
+    radial-gradient(circle at 80% 10%, rgba(48, 138, 171, 0.14), transparent 24%),
+    linear-gradient(180deg, #101c25 0%, #0e1820 100%);
+}
+
+.mod-shell.dark-mode .label {
+  color: #9dacb7;
+}
+
+.mod-shell.dark-mode .identity-main-photo {
+  border: 1px solid #263f4f;
+  background: #142533;
+}
+
+.mod-shell.dark-mode .chip {
+  background: #1d2b35;
+  color: #eef6fa;
+}
+
+.mod-shell.dark-mode .detail-divider {
+  background: #354754;
+}
+
+.mod-shell.dark-mode .identity-section h3,
+.mod-shell.dark-mode .timeline-year,
+.mod-shell.dark-mode .timeline-icon {
+  color: #7cccec;
+}
+
+.mod-shell.dark-mode .background-rule {
+  background: #495965;
+}
+
+.mod-shell.dark-mode .background-filters,
+.mod-shell.dark-mode .filter-child {
+  color: #bdc8d1;
+}
+
+.mod-shell.dark-mode input[type="checkbox"] {
+  accent-color: #69bee0;
+}
+
+.mod-shell.dark-mode .outline-btn {
+  border-color: #5f8da2;
+  background: #122734;
+  color: #a8eaff;
+}
+
+.mod-shell.dark-mode .mod-actions .outline-btn {
+  border-color: rgba(255, 255, 255, 0.78);
+  background: transparent;
+  color: white;
+}
+
+.mod-shell.dark-mode .timeline-card {
+  border-color: #304350;
+  background: #14222d;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.mod-shell.dark-mode .timeline-card:hover,
+.mod-shell.dark-mode .timeline-card.expanded {
+  background: #172938;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+
+.mod-shell.dark-mode .timeline-caret {
+  color: #d7e3ea;
+}
+
+.mod-shell.dark-mode .timeline-expanded {
+  color: #d8e4eb;
+}
+
+.mod-shell.dark-mode .timeline-expanded p,
+.mod-shell.dark-mode .timeline-notes {
+  color: #aebbc5;
+}
+
+.mod-shell.dark-mode .progress-line {
+  border-top-color: #7d95aa;
+}
+
+.mod-shell.dark-mode .progress-line span {
+  border-color: #7d95aa;
+  background: #14222d;
+}
+
+.mod-shell.dark-mode .progress-line span:first-child,
+.mod-shell.dark-mode .progress-line span:nth-child(2) {
+  background: #67c1df;
+}
+
+.mod-shell.dark-mode .verified-icon {
+  background: #5fa56d;
+}
+
+.mod-shell.dark-mode .tone-ready .field-value {
+  color: #72d48f;
 }
 
 .summary-bar {
