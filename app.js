@@ -109,6 +109,7 @@ const state = {
   identityTrail: [],
   identityReturnContext: null,
   stacksReturnContext: null,
+  railsReturnContext: null,
   aliasesExpanded: false,
   activeHistoryFilters: null,
   photoIndex: 0,
@@ -1067,6 +1068,19 @@ function openStacks() {
   renderStacks();
 }
 
+function openRails() {
+  state.railsReturnContext = {
+    view: state.view,
+    scrollY: window.scrollY,
+    identityKey: state.activeIdentityKey,
+    viewingMode: state.viewingMode,
+  };
+  state.view = "rails";
+  state.modal = null;
+  history.replaceState(null, "", "#rails");
+  renderRails();
+}
+
 function openRelatedIdentityFromButton(button) {
   const targetKey = button.dataset.identityKey || "maria-teresa";
   const parentKey = button.dataset.parentIdentityKey || state.activeIdentityKey;
@@ -1919,7 +1933,7 @@ function renderIdentityDetail() {
           </div>
           <div class="rail-action-stack">
             ${buttonComponent("Stacks", { variant: "outline", action: "open-stacks", className: "mini-action", iconName: "inventory_2" })}
-            ${buttonComponent("Rails", { variant: "outline", className: "mini-action", iconName: "account_tree" })}
+            ${buttonComponent("Rails", { variant: "outline", action: "open-rails", className: "mini-action", iconName: "account_tree" })}
           </div>
         </aside>
         <section class="identity-main">
@@ -2209,7 +2223,7 @@ function expandedTimelineDetail(row, index, profile = currentIdentityProfile()) 
       </div>
       <div class="case-links">
         ${ghostButton("Stacks", { action: "open-stacks", iconName: "inventory_2" })}
-        ${ghostButton("Rails", { iconName: "account_tree" })}
+        ${ghostButton("Rails", { action: "open-rails", iconName: "account_tree" })}
       </div>
     </div>
   `;
@@ -2284,6 +2298,9 @@ function bindIdentityEvents() {
   });
   document.querySelectorAll("[data-action='open-stacks']").forEach((button) => {
     button.addEventListener("click", openStacks);
+  });
+  document.querySelectorAll("[data-action='open-rails']").forEach((button) => {
+    button.addEventListener("click", openRails);
   });
   bindIdentityNavigationEvents();
   bindModalEvents();
@@ -2519,6 +2536,186 @@ function bindStacksEvents() {
     button.addEventListener("click", () => {
       const context = state.stacksReturnContext;
       state.stacksReturnContext = null;
+      if (context?.identityKey) state.activeIdentityKey = context.identityKey;
+      if (context?.viewingMode) state.viewingMode = context.viewingMode;
+      if (context?.view === "resolve") {
+        state.view = "resolve";
+        history.replaceState(null, "", "#resolve");
+        renderResolve({ restoreScrollY: context.scrollY });
+        return;
+      }
+      if (context?.view === "identity") {
+        state.view = "identity";
+        history.replaceState(null, "", identityHash(state.activeIdentityKey, state.viewingMode));
+        renderIdentityDetail();
+        requestAnimationFrame(() => window.scrollTo({ top: context.scrollY || 0 }));
+        return;
+      }
+      state.view = "queue";
+      history.replaceState(null, "", "#queue");
+      renderQueue();
+    });
+  });
+}
+
+function railsReturnLabel() {
+  if (state.railsReturnContext?.view === "resolve") return "Back to Resolve Identity";
+  if (state.railsReturnContext?.view === "identity") return "Back to Identity Record";
+  return "Back to Identity Resolution Queue";
+}
+
+function renderRails() {
+  stopQueueCountdown();
+  syncBodyViewingMode("light");
+  const profile = currentIdentityProfile();
+  const physicalRecords = [
+    {
+      barcode: `USCIS-${profile.aNumber.replace("A", "")}-A`,
+      label: "A-File master jacket",
+      location: "National Records Center",
+      address: "150 Space Center Loop, Lee's Summit, MO",
+      shelf: "NRC-04 / Aisle 18 / Bay 07 / Shelf C",
+      status: "In storage",
+      custodian: "NRC Records Operations",
+      lastScan: "Today, 8:42 AM",
+    },
+    {
+      barcode: `MSC-${profile.card.receipt.slice(-7)}`,
+      label: "I-485 adjudication packet",
+      location: "Miami Field Office",
+      address: "8801 NW 7th Ave, Miami, FL",
+      shelf: "MIA-FO / Room B12 / Cart 03 / Slot 14",
+      status: "Checked out",
+      custodian: "Officer D. Klein",
+      lastScan: "Yesterday, 4:18 PM",
+    },
+    {
+      barcode: `BIO-${profile.aNumber.slice(-4)}-${profile.card.siteCode}`,
+      label: "Biometrics support folder",
+      location: "Fort Lauderdale ASC",
+      address: "USCIS Application Support Center",
+      shelf: "ASC-FLL / Cabinet 06 / Drawer 2",
+      status: "Ready for transfer",
+      custodian: "ASC Intake Desk",
+      lastScan: "Apr. 19, 2019",
+    },
+  ];
+  const movements = [
+    ["Today 8:42 AM", "NRC shelf scan confirmed", "NRC-04 / Aisle 18 / Bay 07", "System scan"],
+    ["Yesterday 4:18 PM", "I-485 packet checked out to officer", "Miami Field Office", "Officer D. Klein"],
+    ["Apr. 20, 2019", "Biometrics folder routed to field office", "Fort Lauderdale ASC", "Transfer manifest"],
+    ["Apr. 19, 2019", "Application packet barcode linked", "Miami Field Office intake", "Intake clerk"],
+  ];
+  app.innerHTML = `
+    <div class="rails-shell">
+      <header class="rails-top-nav">
+        <div class="stacks-brand"><img class="seal" src="assets/dhs-seal.png" alt="" /><span>RAILS</span></div>
+        <label class="stacks-search" aria-label="Search barcodes">
+          <input type="search" placeholder="Search by barcode, A#, receipt, or shelf..." />
+          ${icon("barcode_scanner")}
+        </label>
+        <div class="stacks-user">Hello, Daniel <span>|</span> Logout</div>
+      </header>
+      <main class="rails-page">
+        <div class="stacks-meta-row">
+          ${ghostButton(railsReturnLabel(), { action: "return-rails", iconName: "arrow_back" })}
+          <span>Physical inventory sync: Today 8:42AM EST</span>
+        </div>
+        <section class="rails-hero">
+          <div>
+            <div class="modal-kicker">PHYSICAL RECORD TRACKING</div>
+            <h1>${profile.fullName}</h1>
+            <p>Rails links document barcodes to physical USCIS storage locations, checkout custody, and field-office movement history.</p>
+          </div>
+          <div class="rails-barcode-card">
+            <div class="rails-barcode">${profile.aNumber.replace("A", "")}</div>
+            <div class="label">PRIMARY A-FILE BARCODE</div>
+            <strong>USCIS-${profile.aNumber.replace("A", "")}-A</strong>
+          </div>
+        </section>
+        <section class="rails-status-grid">
+          <article>
+            <div class="label">CURRENT MASTER LOCATION</div>
+            <strong>National Records Center</strong>
+            <span>Lee's Summit, MO</span>
+          </article>
+          <article>
+            <div class="label">ACTIVE FIELD OFFICE HOLD</div>
+            <strong>Miami Field Office</strong>
+            <span>I-485 packet checked out</span>
+          </article>
+          <article>
+            <div class="label">CHAIN OF CUSTODY</div>
+            <strong>4 recent scans</strong>
+            <span>No unresolved exceptions</span>
+          </article>
+        </section>
+        <section class="rails-layout">
+          <article class="rails-record-panel">
+            <div class="rails-section-title">
+              <h2>Physical File Locations</h2>
+              ${buttonComponent("Request file pull", { variant: "outline", iconName: "move_to_inbox" })}
+            </div>
+            <div class="rails-record-list">
+              ${physicalRecords
+                .map(
+                  (record) => `
+                    <article class="rails-record-card">
+                      <div class="rails-record-icon">${icon(record.status === "Checked out" ? "outbox" : "inventory_2")}</div>
+                      <div>
+                        <div class="rails-record-title">${record.label}</div>
+                        <div class="rails-record-code">${record.barcode}</div>
+                        <div class="rails-record-meta">${record.location} · ${record.address}</div>
+                        <div class="rails-shelf">${record.shelf}</div>
+                      </div>
+                      <div class="rails-record-side">
+                        <span class="rails-status ${record.status.toLowerCase().replaceAll(" ", "-")}">${record.status}</span>
+                        <small>${record.custodian}<br />${record.lastScan}</small>
+                      </div>
+                    </article>
+                  `,
+                )
+                .join("")}
+            </div>
+          </article>
+          <aside class="rails-map-panel">
+            <h2>Location Map</h2>
+            <div class="rails-map">
+              <div class="rails-map-node nrc"><strong>NRC</strong><span>Master file</span></div>
+              <div class="rails-map-node mia"><strong>MIA</strong><span>Field hold</span></div>
+              <div class="rails-map-node asc"><strong>ASC</strong><span>Biometrics</span></div>
+              <div class="rails-map-line one"></div>
+              <div class="rails-map-line two"></div>
+            </div>
+            <div class="rails-map-legend">
+              <span><i class="stored"></i> Stored</span>
+              <span><i class="checked"></i> Checked out</span>
+              <span><i class="transfer"></i> Transfer ready</span>
+            </div>
+          </aside>
+        </section>
+        <section class="rails-movement-section">
+          <h2>Movement History</h2>
+          <div class="rails-movement-table">
+            <div class="rails-case-head">Scan Time</div>
+            <div class="rails-case-head">Event</div>
+            <div class="rails-case-head">Location</div>
+            <div class="rails-case-head">Source</div>
+            ${movements.map(([time, event, location, source]) => `<div>${time}</div><div>${event}</div><div>${location}</div><div>${source}</div>`).join("")}
+          </div>
+        </section>
+      </main>
+    </div>
+  `;
+  window.scrollTo(0, 0);
+  bindRailsEvents();
+}
+
+function bindRailsEvents() {
+  document.querySelectorAll("[data-action='return-rails']").forEach((button) => {
+    button.addEventListener("click", () => {
+      const context = state.railsReturnContext;
+      state.railsReturnContext = null;
       if (context?.identityKey) state.activeIdentityKey = context.identityKey;
       if (context?.viewingMode) state.viewingMode = context.viewingMode;
       if (context?.view === "resolve") {
@@ -3079,6 +3276,9 @@ function hydrateFromHash() {
   if (hash === "#stacks") {
     state.view = "stacks";
   }
+  if (hash === "#rails") {
+    state.view = "rails";
+  }
   if (identityRoute) {
     state.view = "identity";
     state.activeIdentityKey = identityRoute.key;
@@ -3110,4 +3310,5 @@ hydrateFromHash();
 if (state.view === "resolve") renderResolve();
 else if (state.view === "identity") renderIdentityDetail();
 else if (state.view === "stacks") renderStacks();
+else if (state.view === "rails") renderRails();
 else renderQueue();
