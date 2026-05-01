@@ -958,7 +958,7 @@ h3 {
 }
 
 .mod-sub-nav {
-  height: 52px;
+  height: 50px;
   display: flex;
   align-items: center;
   padding: 0 max(50px, calc((100vw - 1040px) / 2));
@@ -1009,9 +1009,9 @@ h3 {
   color: var(--teal-ink);
   border-color: #8db7c2;
   background: transparent;
-  min-height: 28px;
-  font-size: 9px;
-  padding: 6px 16px;
+  min-height: 32px;
+  font-size: 10px;
+  padding: 8px 18px;
 }
 
 .mod-breadcrumb {
@@ -1136,14 +1136,18 @@ h3 {
 }
 
 .rail-action-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
   margin-top: 10px;
 }
 
 .mini-action {
   display: block;
   width: fit-content;
-  min-width: 96px;
-  margin-top: 14px;
+  min-width: 110px;
+  margin-top: 0;
 }
 
 .identity-main {
