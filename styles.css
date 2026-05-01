@@ -1142,11 +1142,8 @@ h3 {
 .mini-action {
   display: block;
   width: fit-content;
-  min-width: 78px;
-  min-height: 26px;
+  min-width: 96px;
   margin-top: 14px;
-  padding: 5px 14px;
-  font-size: 9px;
 }
 
 .identity-main {
