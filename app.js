@@ -783,6 +783,76 @@ Object.assign(identityProfiles, {
   }),
 });
 
+let personDisplayLookup = new Map();
+
+function canonicalProfileName(profile) {
+  return [profile.first, profile.middle, profile.last?.toLocaleUpperCase()]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function uppercaseLastTokenFallback(name = "") {
+  if (!name || String(name).startsWith("No ")) return name;
+  const parts = String(name).trim().split(/\s+/);
+  if (parts.length <= 1) return String(name).toLocaleUpperCase();
+  const last = parts.pop();
+  return [...parts, last.toLocaleUpperCase()].join(" ");
+}
+
+function rebuildPersonDisplayLookup() {
+  personDisplayLookup = new Map();
+  const add = (name, display) => {
+    if (name) personDisplayLookup.set(normalized(name), display);
+  };
+  add(applicant.name, applicant.name);
+  Object.values(identityProfiles).forEach((profile) => {
+    const displayName = canonicalProfileName(profile);
+    add(profile.fullName, displayName);
+    add(displayName, displayName);
+    (profile.aliases || []).forEach((alias) => add(alias, uppercaseLastTokenFallback(alias)));
+  });
+}
+
+function displayPersonName(name = "") {
+  if (!name || String(name).startsWith("No ")) return name;
+  return personDisplayLookup.get(normalized(name)) || uppercaseLastTokenFallback(name);
+}
+
+function displayPersonList(items = []) {
+  return items.map((item) => displayPersonName(item));
+}
+
+function normalizeDisplayedPersonNames() {
+  rebuildPersonDisplayLookup();
+
+  applicant.name = displayPersonName(applicant.name);
+  applicant.parents = displayPersonList(applicant.parents);
+  applicant.aliases = applicant.aliases.map((alias) => displayPersonName(alias));
+
+  candidates.forEach((candidate) => {
+    const profile = identityProfiles[candidate.identityKey];
+    candidate.name = profile ? canonicalProfileName(profile) : displayPersonName(candidate.name);
+    candidate.parents = displayPersonList(candidate.parents || []);
+    candidate.children = displayPersonList(candidate.children || []);
+    candidate.spouse = displayPersonName(candidate.spouse);
+    candidate.aliases = (candidate.aliases || []).map((alias) => displayPersonName(alias));
+  });
+
+  Object.values(identityProfiles).forEach((profile) => {
+    profile.last = profile.last.toLocaleUpperCase();
+    profile.fullName = canonicalProfileName(profile);
+    profile.aliases = (profile.aliases || []).map((alias) => displayPersonName(alias));
+    profile.relationships.parents = displayPersonList(profile.relationships.parents || []);
+    profile.relationships.spouse = displayPersonName(profile.relationships.spouse);
+    profile.relationships.attorney = displayPersonName(profile.relationships.attorney);
+    profile.relationships.children = displayPersonList(profile.relationships.children || []);
+  });
+
+  rebuildPersonDisplayLookup();
+}
+
+normalizeDisplayedPersonNames();
+
 const backgroundRows = [
   { year: "2019", type: "PERMANENT RESIDENCE", title: "I-485", status: "PENDING", dateLabel: "RECEIVED", date: "April 19, 2019", accent: "orange", filterKeys: ["i-485"] },
   { year: "2019", type: "ASC APPOINTMENT", title: "Fort Lauderdale ASC", status: "COMPLETED", dateLabel: "TRANSACTION DATE", date: "April 19, 2019", accent: "blue", filterKeys: ["fingerprint-hits"] },
@@ -1103,14 +1173,16 @@ function linkedIdentityItems(items = [], fallback = "Not recorded", options = {}
   return usableItems
     .map((item) => {
       const targetKey = profileKeyForPersonName(item);
-      if (!targetKey) return ghostButton(item, { className: "stacked-link" });
-      return ghostButton(item, {
+      const displayItem = displayPersonName(item);
+      if (!targetKey) return ghostButton(displayItem, { className: "stacked-link" });
+      return ghostButton(displayItem, {
         action: "open-related-identity",
         className: "stacked-link",
         iconName: "account_circle",
         attrs: {
           "data-identity-key": targetKey,
           "data-parent-identity-key": parentKey,
+          "aria-label": `Open identity record for ${displayItem}`,
         },
       });
     })
@@ -2429,10 +2501,10 @@ function renderStacks() {
     ["1/14/19", "I-765", "APPROVED", "EAC7294023123"],
   ];
   const related = [
-    ["Mia Ramírez", "Parent", "A7294028469"],
-    ["Jose García", "Parent", "A8923840283"],
-    [profile.relationships.spouse || "Julio Arroyo", "Spouse", "A7294028469"],
-    [(profile.relationships.children || ["Gloria Arroyo García"])[0], "Child", "A8923840283"],
+    [displayPersonName("Mia Ramírez"), "Parent", "A7294028469"],
+    [displayPersonName("Jose García"), "Parent", "A8923840283"],
+    [displayPersonName(profile.relationships.spouse || "Julio Arroyo"), "Spouse", "A7294028469"],
+    [displayPersonName((profile.relationships.children || ["Gloria Arroyo García"])[0]), "Child", "A8923840283"],
   ];
   app.innerHTML = `
     <div class="stacks-shell">
