@@ -110,6 +110,10 @@ const state = {
   identityReturnContext: null,
   aliasesExpanded: false,
   activeHistoryFilters: null,
+  photoIndex: 0,
+  photoThumbOffset: 0,
+  photoViewMode: "viewer",
+  photoDetailsOpen: false,
   attachments: [],
   undoSnapshot: null,
 };
@@ -1019,6 +1023,14 @@ function currentIdentityProfile() {
   return identityProfiles[state.activeIdentityKey] || identityProfiles["maria-teresa"];
 }
 
+function openPhotoModal() {
+  state.modal = "photo";
+  state.photoIndex = 0;
+  state.photoThumbOffset = 0;
+  state.photoViewMode = "viewer";
+  state.photoDetailsOpen = false;
+}
+
 function openIdentity(key = "maria-teresa", options = {}) {
   state.activeIdentityKey = identityProfiles[key] ? key : "maria-teresa";
   state.identityTrail = options.trail || [];
@@ -1810,7 +1822,7 @@ function bindResolveEvents() {
     }, 850);
   });
   document.querySelector("[data-action='open-photo']")?.addEventListener("click", () => {
-    state.modal = "photo";
+    openPhotoModal();
     renderResolve({ preserveScroll: true });
   });
   document.querySelector("[data-action='open-add-link']")?.addEventListener("click", () => {
@@ -2237,7 +2249,7 @@ function bindIdentityEvents() {
     renderIdentityDetail();
   });
   document.querySelector("[data-action='open-photo']")?.addEventListener("click", () => {
-    state.modal = "photo";
+    openPhotoModal();
     renderIdentityDetail();
   });
   document.querySelector("[data-action='open-green-card']")?.addEventListener("click", () => {
@@ -2523,30 +2535,181 @@ function attachDocumentOverlay() {
   `;
 }
 
+const visiblePhotoThumbCount = 5;
+
+function photoSetForProfile(profile = currentIdentityProfile()) {
+  return [profile.photo, ...portraitAssets.thumbs.filter((src) => src !== profile.photo)].slice(0, 8);
+}
+
+function ensurePhotoState(photoCount) {
+  const lastIndex = Math.max(photoCount - 1, 0);
+  state.photoIndex = Math.min(Math.max(Number(state.photoIndex) || 0, 0), lastIndex);
+  const maxOffset = Math.max(photoCount - visiblePhotoThumbCount, 0);
+  state.photoThumbOffset = Math.min(Math.max(Number(state.photoThumbOffset) || 0, 0), maxOffset);
+  if (state.photoIndex < state.photoThumbOffset) state.photoThumbOffset = state.photoIndex;
+  if (state.photoIndex >= state.photoThumbOffset + visiblePhotoThumbCount) {
+    state.photoThumbOffset = Math.min(state.photoIndex - visiblePhotoThumbCount + 1, maxOffset);
+  }
+}
+
+function photoEventMeta(profile, index) {
+  const templates = [
+    {
+      dateTaken: profile.photoMeta.dateTaken,
+      receipt: profile.photoMeta.receipt,
+      reason: profile.photoMeta.reason,
+      eventType: "ASC biometric capture",
+      captureSite: "Fort Lauderdale Application Support Center",
+      sourceSystem: "USCIS ELIS / IDENT biometric bridge",
+      encounterId: `BIO-${profile.card.siteCode}-${profile.aNumber.slice(-4)}-0315`,
+      captureMethod: "Live facial image captured with ten-print enrollment",
+      operatorAction: "Photo accepted; fingerprint packet linked to benefit receipt",
+    },
+    {
+      dateTaken: "April 19, 2019",
+      receipt: profile.card.receipt,
+      reason: "Benefit intake photo",
+      eventType: "I-485 intake",
+      captureSite: `${profile.card.siteCode} Field Office`,
+      sourceSystem: "PCIS intake packet",
+      encounterId: `INTAKE-${profile.card.siteCode}-${profile.aNumber.slice(-3)}`,
+      captureMethod: "Document photo validated against intake identity",
+      operatorAction: "Image associated with permanent residence case file",
+    },
+    {
+      dateTaken: profile.biographic.dfo,
+      receipt: "ENF-2016-0810",
+      reason: "First encounter image",
+      eventType: "Identity encounter",
+      captureSite: profile.biographic.poe,
+      sourceSystem: "IDENT encounter record",
+      encounterId: `DFO-${profile.finRaw?.slice(-4) || profile.aNumber.slice(-4)}`,
+      captureMethod: "Encounter image imported from biometric screening event",
+      operatorAction: "Name and DOB matched to existing person-centric record",
+    },
+    {
+      dateTaken: "June 18, 2015",
+      receipt: `DOE-${profile.biographic.passport}`,
+      reason: "Port-of-entry processing",
+      eventType: "Arrival inspection",
+      captureSite: profile.biographic.poe,
+      sourceSystem: "CBP arrival history",
+      encounterId: `POE-MIA-${profile.biographic.passport}`,
+      captureMethod: "Travel document photo compared with live inspection image",
+      operatorAction: "Entry event attached to travel and benefit timeline",
+    },
+  ];
+  return templates[index % templates.length];
+}
+
+function photoDetailsPanel(meta, profile) {
+  return `
+    <div class="photo-details-panel" aria-live="polite">
+      <div class="photo-detail-summary">
+        ${icon("fingerprint")}
+        <div>
+          <div class="label">BIOMETRIC EVENT</div>
+          <strong>${meta.eventType}</strong>
+        </div>
+      </div>
+      <div class="photo-detail-grid">
+        <div><div class="label">CAPTURE SITE</div><div>${meta.captureSite}</div></div>
+        <div><div class="label">SOURCE SYSTEM</div><div>${meta.sourceSystem}</div></div>
+        <div><div class="label">ENCOUNTER ID</div><div>${meta.encounterId}</div></div>
+        <div><div class="label">LINKED A#</div><div>${profile.aNumber}</div></div>
+        <div><div class="label">CAPTURE METHOD</div><div>${meta.captureMethod}</div></div>
+        <div><div class="label">OFFICER ACTION</div><div>${meta.operatorAction}</div></div>
+      </div>
+    </div>
+  `;
+}
+
+function moveSelectedPhoto(delta) {
+  const photoCount = photoSetForProfile().length;
+  ensurePhotoState(photoCount);
+  state.photoIndex = (state.photoIndex + delta + photoCount) % photoCount;
+  ensurePhotoState(photoCount);
+}
+
+function rerenderCurrentModalSurface() {
+  if (state.view === "resolve") {
+    renderResolve({ preserveScroll: true });
+  } else if (state.view === "identity") {
+    rerenderIdentityPreservingScroll();
+  } else {
+    renderQueue();
+  }
+}
+
 function photoOverlay() {
   const profile = currentIdentityProfile();
-  const photoSet = [profile.photo, ...portraitAssets.thumbs.filter((src) => src !== profile.photo)].slice(0, 8);
-  const thumbs = photoSet
-    .map((src, index) => `<img class="portrait tiny thumb ${index === 0 ? "selected" : ""}" src="${src}" alt="" />`)
+  const photoSet = photoSetForProfile(profile);
+  ensurePhotoState(photoSet.length);
+  const selectedPhoto = photoSet[state.photoIndex];
+  const selectedMeta = photoEventMeta(profile, state.photoIndex);
+  const visibleThumbs = photoSet.slice(state.photoThumbOffset, state.photoThumbOffset + visiblePhotoThumbCount);
+  const thumbs = visibleThumbs
+    .map((src, visibleIndex) => {
+      const index = state.photoThumbOffset + visibleIndex;
+      return `
+        <button type="button" class="thumb-button ${index === state.photoIndex ? "selected" : ""}" data-action="select-photo" data-photo-index="${index}" aria-label="View photo ${index + 1}">
+          <img class="portrait tiny thumb" src="${src}" alt="" />
+        </button>
+      `;
+    })
     .join("");
+  const gridItems = photoSet
+    .map((src, index) => {
+      const meta = photoEventMeta(profile, index);
+      return `
+        <button type="button" class="photo-grid-item ${index === state.photoIndex ? "selected" : ""}" data-action="select-photo" data-photo-index="${index}" aria-label="Open photo ${index + 1}">
+          <img src="${src}" alt="" />
+          <span>${meta.reason}</span>
+          <small>${meta.dateTaken}</small>
+        </button>
+      `;
+    })
+    .join("");
+  const isGrid = state.photoViewMode === "grid";
   return `
     <div class="overlay-backdrop">
-      <div class="photo-modal" role="dialog" aria-modal="true" aria-label="Photo viewer">
+      <div class="photo-modal ${isGrid ? "grid-mode" : ""}" role="dialog" aria-modal="true" aria-label="Photo viewer">
         ${iconButton("close", "Close photo viewer", { action: "close-modal", className: "modal-close" })}
-        <div class="photo-title">${photoSet.length} photos ${ghostButton("View as a grid")}</div>
-        <div class="photo-viewer">
-          <img class="portrait large-photo" src="${profile.photo}" alt="" />
-          <div class="photo-meta">
-            <div><div class="label">DATE TAKEN</div><div class="value">${profile.photoMeta.dateTaken}</div></div>
-            <div><div class="label">RECEIPT #</div><div class="value">${profile.photoMeta.receipt}</div></div>
-            <div><div class="label">REASON</div><div class="value">${profile.photoMeta.reason}</div></div>
+        <div class="photo-title-row">
+          <div>
+            <div class="modal-kicker">PHOTOS</div>
+            <div class="photo-title">${photoSet.length} photos</div>
           </div>
-          ${ghostButton("View more details")}
+          ${ghostButton(isGrid ? "Back to lightbox" : "View as grid", {
+            action: "toggle-photo-grid",
+            iconName: isGrid ? "view_carousel" : "grid_view",
+          })}
         </div>
-        <div class="thumb-row">
-          ${iconButton("chevron_left", "Previous photo", { className: "carousel-arrow" })}
-          ${thumbs}
-          ${iconButton("chevron_right", "Next photo", { className: "carousel-arrow" })}
+        ${
+          isGrid
+            ? `<div class="photo-grid" aria-label="Photo grid">${gridItems}</div>
+               <p class="photo-grid-helper">Choose a photo to return to the focused lightbox view, or close the viewer to return to the identity record.</p>`
+            : `<div class="photo-viewer">
+                <img class="portrait large-photo" src="${selectedPhoto}" alt="" />
+                <div class="photo-meta">
+                  <div><div class="label">DATE TAKEN</div><div class="value">${selectedMeta.dateTaken}</div></div>
+                  <div><div class="label">RECEIPT #</div><div class="value">${selectedMeta.receipt}</div></div>
+                  <div><div class="label">REASON</div><div class="value">${selectedMeta.reason}</div></div>
+                </div>
+                ${ghostButton(state.photoDetailsOpen ? "Hide details" : "View more details", {
+                  action: "toggle-photo-details",
+                  iconName: state.photoDetailsOpen ? "expand_less" : "expand_more",
+                })}
+                ${state.photoDetailsOpen ? photoDetailsPanel(selectedMeta, profile) : ""}
+              </div>
+              <div class="thumb-row">
+                ${iconButton("chevron_left", "Previous photo", { action: "photo-prev", className: "carousel-arrow" })}
+                ${thumbs}
+                ${iconButton("chevron_right", "Next photo", { action: "photo-next", className: "carousel-arrow" })}
+              </div>`
+        }
+        <div class="photo-modal-actions">
+          ${ghostButton("Close photo viewer", { action: "close-modal" })}
         </div>
       </div>
     </div>
@@ -2610,10 +2773,38 @@ function bindModalEvents() {
   document.querySelectorAll("[data-action='close-modal']").forEach((button) => button.addEventListener("click", () => {
     state.modal = null;
     state.actionSubmitting = "";
+    state.photoViewMode = "viewer";
+    state.photoDetailsOpen = false;
     if (state.view === "resolve") renderResolve({ preserveScroll: true });
     else if (state.view === "identity") renderIdentityDetail();
     else renderQueue();
   }));
+  document.querySelector("[data-action='toggle-photo-grid']")?.addEventListener("click", () => {
+    state.photoViewMode = state.photoViewMode === "grid" ? "viewer" : "grid";
+    state.photoDetailsOpen = false;
+    rerenderCurrentModalSurface();
+  });
+  document.querySelector("[data-action='toggle-photo-details']")?.addEventListener("click", () => {
+    state.photoDetailsOpen = !state.photoDetailsOpen;
+    rerenderCurrentModalSurface();
+  });
+  document.querySelector("[data-action='photo-prev']")?.addEventListener("click", () => {
+    moveSelectedPhoto(-1);
+    rerenderCurrentModalSurface();
+  });
+  document.querySelector("[data-action='photo-next']")?.addEventListener("click", () => {
+    moveSelectedPhoto(1);
+    rerenderCurrentModalSurface();
+  });
+  document.querySelectorAll("[data-action='select-photo']").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.photoIndex = Number(button.dataset.photoIndex) || 0;
+      state.photoViewMode = "viewer";
+      state.photoDetailsOpen = false;
+      ensurePhotoState(photoSetForProfile().length);
+      rerenderCurrentModalSurface();
+    });
+  });
   document.querySelector("[data-action='confirm-assign-a']")?.addEventListener("click", () => {
     state.actionSubmitting = "assign-a";
     renderQueue();
@@ -2692,7 +2883,7 @@ function hydrateFromHash() {
   if (hash === "#resolve-a") {
     state.primaryA = applicant.id;
   }
-  if (hash === "#photo") state.modal = "photo";
+  if (hash === "#photo") openPhotoModal();
   if (hash === "#ead") state.modal = "ead";
   if (hash === "#green-card") state.modal = "green-card";
   if (hash === "#pending") {
