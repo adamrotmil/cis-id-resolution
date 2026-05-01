@@ -872,7 +872,7 @@ function modShell(content) {
           ${buttonComponent("Dark", { variant: "mode", action: "set-viewing-mode", className: isDark ? "active" : "", attrs: { "data-mode": "dark", "aria-pressed": isDark } })}
         </div>
         <div class="mod-actions">
-          ${buttonComponent("View Applicant's Action history", { variant: "outline" })}
+          ${buttonComponent("View Applicant's Action History", { variant: "outline" })}
           ${buttonComponent("Request data update", { variant: "outline" })}
         </div>
       </div>
