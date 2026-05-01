@@ -80,6 +80,34 @@ const candidates = [
   },
 ];
 
+const candidateSourceProfiles = {
+  "maria-teresa": {
+    sources: ["I-485 packet", "IDENT", "ELIS", "CBP"],
+    sync: "Synced today 08:42",
+    issues: [],
+  },
+  julia: {
+    sources: ["I-485 packet", "IDENT", "ELIS"],
+    sync: "Last sync Apr 29",
+    issues: ["Source data is stale"],
+  },
+  victoria: {
+    sources: ["ELIS", "CBP"],
+    sync: "IDENT unavailable",
+    issues: ["Source unavailable"],
+  },
+  "maria-ramirez": {
+    sources: ["I-485 packet", "IDENT", "ELIS"],
+    sync: "Last sync Apr 29",
+    issues: ["Source data is stale"],
+  },
+  "maria-teresa-ramirez": {
+    sources: ["I-485 packet", "IDENT", "CBP"],
+    sync: "Synced today 07:55",
+    issues: [],
+  },
+};
+
 const savedViewingMode = (() => {
   try {
     return localStorage.getItem("cisViewingMode") || "light";
@@ -1228,6 +1256,38 @@ function normalized(value = "") {
     .toLowerCase();
 }
 
+function parentMatchResult(candidate) {
+  const targetParents = applicant.parents.map((parent) => normalized(parent));
+  const candidateParents = candidate.parents || [];
+  const exactMatches = candidateParents.filter((parent) => targetParents.includes(normalized(parent)));
+  if (exactMatches.length === targetParents.length && candidateParents.length === targetParents.length) return "match";
+  if (exactMatches.length) return "partial";
+
+  const applicantParentTokens = new Set(applicant.parents.flatMap((parent) => normalized(parent).split(/\s+/)).filter((token) => token.length > 3));
+  const hasTokenOverlap = candidateParents.some((parent) =>
+    normalized(parent)
+      .split(/\s+/)
+      .some((token) => applicantParentTokens.has(token)),
+  );
+  return hasTokenOverlap ? "partial" : "none";
+}
+
+function parentSupportsMatch(parent = "") {
+  const targetParents = applicant.parents.map((item) => normalized(item));
+  if (targetParents.includes(normalized(parent))) return true;
+  const parentTokens = normalized(parent).split(/\s+/).filter((token) => token.length > 3);
+  const applicantParentTokens = new Set(applicant.parents.flatMap((item) => normalized(item).split(/\s+/)).filter((token) => token.length > 3));
+  return parentTokens.some((token) => applicantParentTokens.has(token));
+}
+
+function candidateSourceProfile(candidate) {
+  return candidateSourceProfiles[candidate.identityKey] || {
+    sources: ["I-485 packet", "IDENT"],
+    sync: "Sync time unavailable",
+    issues: ["Source unavailable"],
+  };
+}
+
 const relationshipIdentityAliases = {
   [normalized("MIA RAMÍREZ")]: "mia-ramirez",
   [normalized("Jose GARCÍA")]: "jose-garcia",
@@ -1253,15 +1313,23 @@ function candidateMatchLabels(candidate) {
   if (candidate.dob === applicant.dob) labels.push("DOB");
   if (candidate.fin === applicant.fin) labels.push("FIN");
   if (candidate.cob === applicant.cob) labels.push("COB");
-  const applicantParentTokens = new Set(applicant.parents.flatMap((parent) => normalized(parent).split(/\s+/)).filter((token) => token.length > 3));
-  const hasParentOverlap = (candidate.parents || []).some((parent) =>
-    normalized(parent)
-      .split(/\s+/)
-      .some((token) => applicantParentTokens.has(token)),
-  );
-  if (hasParentOverlap) labels.push("Parents");
+  if (parentMatchResult(candidate) !== "none") labels.push("Parents");
   if (candidate.id === applicant.id) labels.push("A#");
   return labels;
+}
+
+function candidateReviewFlags(candidate) {
+  const flags = [];
+  if (candidate.id !== applicant.id) flags.push("A# does not match");
+  if (candidate.fin !== applicant.fin) flags.push("FIN does not match");
+  const parentResult = parentMatchResult(candidate);
+  if (parentResult === "partial") flags.push("Only partial parent match");
+  if (parentResult === "none") flags.push("Parent names differ");
+  return [...flags, ...candidateSourceProfile(candidate).issues];
+}
+
+function reviewFieldsForCandidates(selected = []) {
+  return [...new Set(selected.flatMap((candidate) => candidateReviewFlags(candidate)))];
 }
 
 function evidenceSummary(selected) {
@@ -1272,6 +1340,26 @@ function evidenceSummary(selected) {
       return { label, count };
     })
     .filter((item) => item.count > 0);
+}
+
+function fieldResult(candidate, label) {
+  if (label === "DOB") return candidate.dob === applicant.dob ? "Match" : "Does not match";
+  if (label === "FIN") return candidate.fin === applicant.fin ? "Match" : "Does not match";
+  if (label === "COB") return candidate.cob === applicant.cob ? "Match" : "Does not match";
+  if (label === "A#") return candidate.id === applicant.id ? "Match" : "Does not match";
+  if (label === "Parents") {
+    const result = parentMatchResult(candidate);
+    if (result === "match") return "Match";
+    if (result === "partial") return "Partial";
+    return "Does not match";
+  }
+  return "Does not match";
+}
+
+function resultTone(result) {
+  if (result === "Match" || result === "Matches") return "match";
+  if (result === "Partial" || result === "Partial match") return "partial";
+  return "miss";
 }
 
 function attrsToString(attrs = {}) {
@@ -1340,6 +1428,78 @@ function badge(label, options = {}) {
 
 function statusBadge(status) {
   return badge(status, { tone: statusClass(status), className: `candidate-status ${statusClass(status)}` });
+}
+
+function reviewFlagRow(candidate, options = {}) {
+  const flags = candidateReviewFlags(candidate);
+  if (!flags.length) return "";
+  const { compact = false } = options;
+  return `
+    <div class="review-flag-row ${compact ? "compact" : ""}">
+      <span class="review-label">Needs review</span>
+      ${flags.map((flag) => chip(flag, "review-chip")).join("")}
+    </div>
+  `;
+}
+
+function sourceRow(candidate, options = {}) {
+  const profile = candidateSourceProfile(candidate);
+  const { compact = false } = options;
+  return `
+    <div class="source-row ${compact ? "compact" : ""}">
+      <span class="source-label">Sources</span>
+      ${profile.sources.map((source) => chip(source, "source-chip")).join("")}
+      <span class="source-sync">${profile.sync}</span>
+    </div>
+  `;
+}
+
+function candidateParentsMarkup(candidate) {
+  return (candidate.parents || [])
+    .map((parent) => (parentSupportsMatch(parent) ? `<span class="highlight">${parent}</span>` : parent))
+    .join("<br />");
+}
+
+function evidenceSourcesDisclosure(candidate) {
+  const sourceProfile = candidateSourceProfile(candidate);
+  const sourceByField = {
+    DOB: "I-485 packet",
+    FIN: "IDENT",
+    COB: "CBP",
+    "A#": "ELIS",
+    Parents: "I-485 packet",
+  };
+  const rows = [
+    ["DOB", applicant.dob, candidate.dob],
+    ["FIN", applicant.fin, candidate.fin],
+    ["COB", applicant.cob, candidate.cob],
+    ["A#", applicant.id, candidate.id],
+    ["Parents", applicant.parents.join("; "), (candidate.parents || []).join("; ")],
+  ];
+  return `
+    <details class="evidence-disclosure" open>
+      <summary>Evidence sources</summary>
+      <div class="evidence-table">
+        <div class="evidence-head">Field</div>
+        <div class="evidence-head">Target value</div>
+        <div class="evidence-head">Candidate value</div>
+        <div class="evidence-head">Source</div>
+        <div class="evidence-head">Result</div>
+        ${rows
+          .map(([label, targetValue, candidateValue]) => {
+            const result = fieldResult(candidate, label) === "Match" ? "Matches" : fieldResult(candidate, label) === "Partial" ? "Partial match" : "Does not match";
+            return `
+              <div>${label}</div>
+              <div>${targetValue}</div>
+              <div>${candidateValue}</div>
+              <div>${sourceByField[label]} · ${sourceProfile.sync}</div>
+              <div><span class="result-cell ${resultTone(result)}">${result}</span></div>
+            `;
+          })
+          .join("")}
+      </div>
+    </details>
+  `;
 }
 
 function checkboxComponent(options = {}) {
@@ -1461,6 +1621,7 @@ function candidateRow(candidate, index, expanded = false) {
         ${isSelected ? badge("Selected", { className: "selected-badge" }) : ""}
         ${candidate.pending ? badge("Pending review", { className: "selected-badge" }) : ""}
         <p class="card-note">${candidate.reason}</p>
+        ${reviewFlagRow(candidate)}
         <div class="candidate-top">
           <div class="portrait-card">
             ${portrait("candidate", index, "small")}
@@ -1476,10 +1637,9 @@ function candidateRow(candidate, index, expanded = false) {
             </div>
             <div class="parents match-parents">
               <div class="label">PARENTS</div>
-              <div class="copy">${candidate.parents
-                .map((parent) => `<span class="highlight">${parent}</span>`)
-                .join("<br />")}</div>
+              <div class="copy">${candidateParentsMarkup(candidate)}</div>
             </div>
+            ${sourceRow(candidate)}
             <div class="aliases candidate-aliases">
               <div class="label">ALIASES</div>
               <div class="chips">${candidate.aliases.map((alias) => chip(alias)).join("")}</div>
@@ -1512,6 +1672,7 @@ function candidateRow(candidate, index, expanded = false) {
               <div class="detail-section-title">CARD DATA</div>
               ${cardData()}
             </div>
+            ${expanded ? evidenceSourcesDisclosure(candidate) : ""}
             ${candidate.pending ? pendingRibbon() : ""}
           </div>
         </div>
@@ -1528,6 +1689,7 @@ function compactCandidate(candidate, index) {
       <article class="candidate-card compact-match ${isSelected ? "selected" : ""}">
         ${isSelected ? badge("Selected", { className: "selected-badge" }) : ""}
         <p class="card-note">${candidate.reason}</p>
+        ${reviewFlagRow(candidate, { compact: true })}
         <div class="candidate-top">
           <div class="portrait-card">
             ${portrait("candidate", index, "small")}
@@ -1543,8 +1705,9 @@ function compactCandidate(candidate, index) {
             </div>
             <div class="parents">
               <div class="label">PARENTS</div>
-              <div class="copy">${candidate.parents.join("<br />")}</div>
+              <div class="copy">${candidateParentsMarkup(candidate)}</div>
             </div>
+            ${sourceRow(candidate, { compact: true })}
           </div>
         </div>
       </article>
@@ -1571,6 +1734,33 @@ function cardData() {
   `;
 }
 
+function sourceCountForCandidates(selected = []) {
+  return new Set(selected.flatMap((candidate) => candidateSourceProfile(candidate).sources)).size;
+}
+
+function clusterEvidenceMatrix(selected = []) {
+  const fields = ["DOB", "FIN", "COB", "A#", "Parents"];
+  return `
+    <div class="summary-matrix" role="table" aria-label="Selected identity evidence review">
+      <div class="summary-matrix-head">Identity</div>
+      ${fields.map((fieldName) => `<div class="summary-matrix-head">${fieldName}</div>`).join("")}
+      ${selected
+        .map(
+          (candidate) => `
+            <div class="summary-matrix-id">${candidate.id}</div>
+            ${fields
+              .map((fieldName) => {
+                const result = fieldResult(candidate, fieldName);
+                return `<div class="summary-matrix-cell ${resultTone(result)}">${result}</div>`;
+              })
+              .join("")}
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
 function summaryBar(selected = []) {
   const count = selected.length;
   if (!count) return "";
@@ -1579,28 +1769,28 @@ function summaryBar(selected = []) {
     count === 1
       ? `${selected[0].id} · ${selected[0].name}`
       : `Resolution cluster: ${selected.map((candidate) => candidate.id).join(" · ")}`;
-  const evidence = evidenceSummary(selected);
+  const reviewFlags = reviewFieldsForCandidates(selected);
   const evidenceContent =
     count <= 1
-      ? `<div class="match-chips">
-          ${candidateMatchLabels(selected[0] || candidates[0])
-            .map((label) => chip(label, "match-chip"))
-            .join("")}
-          <span class="summary-copy">Similar ${candidateMatchLabels(selected[0] || candidates[0]).join(", ")}${count ? "" : "."}</span>
+      ? `<div class="summary-stack">
+          <div class="summary-mini-section">
+            <div class="label">Matching datapoints</div>
+            <div class="match-chips">
+              ${candidateMatchLabels(selected[0] || candidates[0])
+                .map((label) => chip(label, "match-chip"))
+                .join("")}
+            </div>
+          </div>
+          <div class="summary-mini-section">
+            <div class="label">Review needed</div>
+            <div class="match-chips">
+              ${reviewFlags.length ? reviewFlags.slice(0, 3).map((flag) => chip(flag, "review-chip")).join("") : chip("No review flags", "source-chip")}
+              <span class="summary-source-count">${sourceCountForCandidates(selected)} evidence sources</span>
+            </div>
+          </div>
         </div>`
-      : `<div class="cluster-evidence-grid">
-          ${evidence
-            .map(
-              ({ label, count: matchCount }) => `
-                <div class="cluster-evidence-item">
-                  <strong>${label}</strong>
-                  <span>${matchCount} of ${count} ${matchCount === 1 ? "candidate" : "candidates"}</span>
-                </div>
-              `,
-            )
-            .join("")}
-        </div>
-        <p class="summary-copy cluster-copy">Treating these as possible fragments of the same identity. Resolve packages each candidate's evidence separately for final evaluator review.</p>`;
+      : `${clusterEvidenceMatrix(selected)}
+        <p class="summary-copy cluster-copy">${sourceCountForCandidates(selected)} evidence sources. Review required before final resolution.</p>`;
   return `
     <aside class="summary-bar visible" aria-live="polite">
       <div class="selected-summary">
@@ -1611,7 +1801,6 @@ function summaryBar(selected = []) {
         </div>
       </div>
       <div>
-        <div class="label">${count > 1 ? "Cluster evidence" : "Matching datapoints"}</div>
         ${evidenceContent}
       </div>
       <div class="summary-actions">
@@ -1745,6 +1934,8 @@ function selectedIdentityCard() {
                   <div class="selected-card-evidence">
                     ${matches.map((label) => chip(label, "match-chip")).join("")}
                   </div>
+                  ${reviewFlagRow(candidate, { compact: true })}
+                  ${sourceRow(candidate, { compact: true })}
                 </div>
               </div>
             </article>
@@ -1822,6 +2013,7 @@ function resolveSteps(valid) {
         <h3>3. Provide a reason for linking these identities and any additional information.</h3>
       </div>
       <p class="helper">${valid ? "Notes will be included for final evaluator review." : "Complete the primary name and A-number selections to add final notes."}</p>
+      ${valid ? resolutionPackageReviewSummary(selected) : ""}
       <textarea class="notes-field" ${valid ? "" : "disabled"} placeholder="Add why these selected fragments appear to refer to the same identity">${state.notes}</textarea>
       ${
         valid
@@ -1837,6 +2029,34 @@ function resolveSteps(valid) {
         ${ghostButton("Cancel", { action: "cancel-resolve", className: "cancel-link" })}
       </div>
     </section>
+  `;
+}
+
+function resolutionPackageReviewSummary(selected = []) {
+  const reviewFields = reviewFieldsForCandidates(selected);
+  return `
+    <div class="package-review-summary">
+      <div>
+        <div class="label">PRIMARY RECORD</div>
+        <strong>${state.primaryName || applicant.name}</strong>
+        <span>${state.primaryA || applicant.id}</span>
+      </div>
+      <div>
+        <div class="label">SELECTED FRAGMENTS</div>
+        <strong>${selected.length || 1}</strong>
+        <span>${selected.map((candidate) => candidate.id).join(" · ") || candidates[0].id}</span>
+      </div>
+      <div>
+        <div class="label">EVIDENCE SOURCES INCLUDED</div>
+        <strong>${sourceCountForCandidates(selected)}</strong>
+        <span>${[...new Set(selected.flatMap((candidate) => candidateSourceProfile(candidate).sources))].join(" · ")}</span>
+      </div>
+      <div>
+        <div class="label">FIELDS REQUIRING REVIEW</div>
+        <strong>${reviewFields.length || 0}</strong>
+        <span>${reviewFields.length ? reviewFields.join(" · ") : "No review flags"}</span>
+      </div>
+    </div>
   `;
 }
 
@@ -1927,7 +2147,7 @@ function bindResolveEvents() {
       state.view = "queue";
       state.toast = {
         title: "Resolution package sent",
-        body: `${selectedCount} linked identity ${selectedCount === 1 ? "candidate" : "candidates"} and your notes were sent to a final evaluator.`,
+        body: `${selectedCount} linked identity ${selectedCount === 1 ? "candidate" : "candidates"}, source evidence, and your notes were sent for evaluator review.`,
         status: "Pending final resolution",
         action: "undo-resolution-submit",
         actionLabel: "Undo",
@@ -2415,7 +2635,7 @@ function renderToast() {
     typeof state.toast === "string"
       ? {
           title: state.toast,
-          body: "1 linked identity candidate and your notes were sent to a final evaluator.",
+          body: "1 linked identity candidate, source evidence, and your notes were sent for evaluator review.",
           status: "Pending final resolution",
         }
       : state.toast;
