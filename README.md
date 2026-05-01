@@ -31,8 +31,10 @@ Useful demo entry points:
 - `index.html#resolve` resolve workflow start
 - `index.html#resolve-name` primary name selected
 - `index.html#resolve-a` primary name and A-number selected
+- `index.html#identity` identity detail page
 - `index.html#photo` photo evidence overlay
 - `index.html#ead` EAD evidence overlay
+- `index.html#green-card` draft green-card overlay
 - `index.html#pending` return-to-queue pending review state
 
 ## GitHub Pages

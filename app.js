@@ -79,6 +79,19 @@ const portraitAssets = {
   ],
 };
 
+const backgroundRows = [
+  { year: "2019", type: "PERMANENT RESIDENCE", title: "I-485", status: "PENDING", dateLabel: "RECEIVED", date: "April 19, 2019", accent: "orange" },
+  { year: "2019", type: "ASC APPOINTMENT", title: "Fort Lauderdale ASC", status: "COMPLETED", dateLabel: "TRANSACTION DATE", date: "April 19, 2019", accent: "blue" },
+  { year: "2019", type: "WORK AUTHORIZATION", title: "I-765", status: "APPROVED", dateLabel: "PROCESS DATE", date: "March 20, 2019", accent: "blue", expanded: true },
+  { year: "2019", type: "AIR ENTRY", title: "Miami International (MIA)", status: "", dateLabel: "ENTRY DATE", date: "March 15, 2019", accent: "blue" },
+  { year: "2019", type: "TSA", title: "Miami International (MIA)", status: "", dateLabel: "ENCOUNTER DATE", date: "March 15, 2019", accent: "blue" },
+  { year: "2017", type: "AIR EXIT", title: "Dulles International (IAD)", status: "", dateLabel: "EXIT DATE", date: "April 20, 2017", accent: "gray" },
+  { year: "2016", type: "IMMIGRATION COURT", title: "IJ Decision", status: "APPROVED", dateLabel: "COURT DATE", date: "December 20, 2016", accent: "blue" },
+  { year: "2016", type: "BACKGROUND CHECK", title: "FBI", status: "WATCHLIST", dateLabel: "RESPONSE DATE", date: "October 10, 2016", accent: "red" },
+  { year: "2016", type: "BACKGROUND CHECK", title: "DoD", status: "NO HIT", dateLabel: "RESPONSE DATE", date: "October 10, 2016", accent: "blue" },
+  { year: "2016", type: "INTERNATIONAL SEARCH", title: "Canada", status: "MATCH", dateLabel: "RESPONSE DATE", date: "October 1, 2016", accent: "red" },
+];
+
 function shell(content, options = {}) {
   const crumbs = options.crumbs
     ? `<div class="sub-nav">${options.crumbs
@@ -97,6 +110,31 @@ function shell(content, options = {}) {
         <div class="hello">HELLO, DANIEL</div>
       </header>
       ${crumbs}
+      ${content}
+    </div>
+  `;
+}
+
+function modShell(content) {
+  return `
+    <div class="mod-shell">
+      <header class="mod-top-nav">
+        <div class="brand"><img class="seal" src="assets/pcis-seal.png" alt="" /><span>CIS Mod</span></div>
+        <div class="nav-spacer"></div>
+        <div class="nav-title">IDENTITY QUEUE</div>
+        <div class="hello">HELLO, DANIEL</div>
+      </header>
+      <div class="mod-sub-nav">
+        <div class="viewing-mode">
+          <span>Viewing Mode</span>
+          <button class="mode-tab active" type="button">Light</button>
+          <button class="mode-tab" type="button">Dark</button>
+        </div>
+        <div class="mod-actions">
+          <button class="outline-btn" type="button">View Applicant's Action history</button>
+          <button class="outline-btn" type="button">Request data update</button>
+        </div>
+      </div>
       ${content}
     </div>
   `;
@@ -205,7 +243,7 @@ function candidateRow(candidate, index, expanded = false) {
         <div class="candidate-top">
           <div class="portrait-card">
             ${portrait("candidate", index, "small")}
-            <button class="outline-btn" type="button" data-action="open-photo">View identity</button>
+            <button class="outline-btn" type="button" data-action="open-identity">View identity</button>
           </div>
           <div>
             <div><span class="candidate-id">${candidate.id}</span><span class="candidate-status">${candidate.status}</span></div>
@@ -268,7 +306,7 @@ function compactCandidate(candidate, index) {
         <div class="candidate-top">
           <div class="portrait-card">
             ${portrait("candidate", index, "small")}
-            <button class="outline-btn" type="button">View identity</button>
+            <button class="outline-btn" type="button" data-action="open-identity">View identity</button>
           </div>
           <div>
             <div><span class="candidate-id">${candidate.id}</span><span class="candidate-status">${candidate.status}</span></div>
@@ -295,7 +333,7 @@ function cardData() {
       <div class="card-data-heading">GREEN CARD</div>
       <div></div>
       <div></div>
-      ${field("STATUS", "NOT PRINTED", false, false, "orange")}
+          ${field("STATUS", "NOT PRINTED", false, false, "orange")}
       ${field("EXPIRES", "TBD")}
       <div></div>
       <div class="card-data-heading">EAD CARD</div>
@@ -365,9 +403,11 @@ function bindQueueEvents() {
     setView("resolve", "#resolve");
     renderResolve();
   });
-  document.querySelector("[data-action='open-photo']")?.addEventListener("click", () => {
-    state.modal = "photo";
-    renderQueue();
+  document.querySelectorAll("[data-action='open-identity']").forEach((button) => {
+    button.addEventListener("click", () => {
+      setView("identity", "#identity");
+      renderIdentityDetail();
+    });
   });
   document.querySelector("[data-action='open-ead']")?.addEventListener("click", () => {
     state.modal = "ead";
@@ -404,7 +444,7 @@ function selectedIdentityCard() {
       <div class="compact-card">
         <div class="portrait-card">
           ${portrait("candidate", 0, "small")}
-          <button class="outline-btn" type="button" data-action="open-photo">View identity</button>
+          <button class="outline-btn" type="button" data-action="open-identity">View identity</button>
         </div>
         <div>
           <div><span class="candidate-id">${candidate.id}</span><span class="candidate-status">${candidate.status}</span></div>
@@ -564,6 +604,243 @@ function bindResolveEvents() {
     state.modal = "photo";
     renderResolve();
   });
+  document.querySelector("[data-action='open-identity']")?.addEventListener("click", () => {
+    setView("identity", "#identity");
+    renderIdentityDetail();
+  });
+  bindModalEvents();
+}
+
+function renderIdentityDetail() {
+  const candidate = candidates[0];
+  const content = `
+    <main class="identity-detail-page">
+      <section class="identity-detail-grid">
+        <aside class="identity-side">
+          <img class="identity-main-photo" src="${portraitAssets.applicant}" alt="" />
+          <button class="link see-more-link" type="button" data-action="open-photo">See more</button>
+          <div class="identity-verified-block">
+            <div class="label">A# <span class="verified-icon">✓</span></div>
+            <div class="big-id">${applicant.id}</div>
+            <button class="link" type="button">See consolidated</button>
+          </div>
+          <div class="identity-verified-block">
+            <div class="label">FIN <span class="verified-icon">✓</span></div>
+            <div class="big-id">3211-00-4444</div>
+          </div>
+          <button class="outline-btn mini-action" type="button">⌁ Stacks</button>
+          <button class="outline-btn mini-action" type="button">⌁ Rails</button>
+        </aside>
+        <section class="identity-main">
+          <div class="name-grid">
+            ${identityNameField("FIRST", "María")}
+            ${identityNameField("MIDDLE", "Teresa")}
+            ${identityNameField("LAST", "GARCÍA RAMÍREZ DE ARROYO", "wide")}
+          </div>
+          <div class="profile-facts">
+            ${identityFact("COA", "K2", true)}
+            ${identityFact("STATUS", "LPR Pending", false, "See previous")}
+            ${identityFact("DOB", applicant.dob, false, "See more")}
+          </div>
+          <div class="identity-alias-row">
+            <div class="label">ALIASES</div>
+            <div class="chips">
+              <span class="chip">Maria Lopez</span>
+              <span class="chip">Martina Maria</span>
+              <span class="chip">Miya Kawasaki</span>
+              <button class="link" type="button">See more</button>
+            </div>
+          </div>
+          <div class="address-block">
+            <div class="label">ADDRESS</div>
+            <div>123 4th St. Miami, FL 33131 <button class="link" type="button">See previous</button></div>
+          </div>
+          <div class="detail-divider"></div>
+          <section class="identity-section">
+            <h3>BIOGRAPHIC DATA</h3>
+            <div class="identity-info-grid">
+              ${field("COB", candidate.cob, false, true)}
+              ${field("POE", "Miami International (MIA)", false, true)}
+              ${field("SSN", "123-45-6789")}
+              ${field("COC", candidate.cob, false, true)}
+              ${field("DOE", "June 18, 2015", false, true)}
+              ${field("PASSPORT #", "41234567")}
+              ${field("GENDER", "Female")}
+              ${field("DFO", "August 10, 2016", false, true)}
+              ${field("FBI#", "285927400")}
+            </div>
+          </section>
+          <div class="detail-divider"></div>
+          <section class="identity-section relationships-section">
+            <h3>RELATIONSHIPS</h3>
+            <div class="identity-info-grid">
+              <div>
+                <div class="label">PARENTS</div>
+                <button class="link stacked-link" type="button">Mia Ramírez</button>
+                <button class="link stacked-link" type="button">Jose García</button>
+              </div>
+              <div>
+                <div class="label">SPOUSE</div>
+                <button class="link stacked-link" type="button">${candidate.spouse}</button>
+              </div>
+              <div>
+                <div class="label">ATTORNEY</div>
+                <div>Hunter Fox</div>
+                <button class="link stacked-link" type="button">See previous</button>
+              </div>
+              <div>
+                <div class="label">CHILDREN</div>
+                ${candidate.children.map((child) => `<button class="link stacked-link" type="button">${child}</button>`).join("")}
+              </div>
+            </div>
+          </section>
+          <div class="detail-divider"></div>
+          <section class="identity-section">
+            <h3>CARD DATA</h3>
+            ${identityCardData()}
+          </section>
+        </section>
+      </section>
+      <section class="background-section">
+        <div class="background-rule"></div>
+        <h2>Background information</h2>
+        <div class="background-layout">
+          ${backgroundFilters()}
+          <div class="timeline-list">
+            ${backgroundRows.map((row, index) => backgroundRow(row, index)).join("")}
+          </div>
+        </div>
+      </section>
+    </main>
+  `;
+
+  app.innerHTML = modShell(content) + renderModal();
+  bindIdentityEvents();
+}
+
+function identityNameField(label, value, variant = "") {
+  return `
+    <div class="identity-name-field ${variant}">
+      <div class="label">${label}</div>
+      <div>${value}</div>
+    </div>
+  `;
+}
+
+function identityFact(label, value, info = false, link = "") {
+  return `
+    <div>
+      <div class="label">${label}${info ? `<span class="info-dot">i</span>` : ""}</div>
+      <div class="identity-fact-value">${value}</div>
+      ${link ? `<button class="link" type="button">${link}</button>` : ""}
+    </div>
+  `;
+}
+
+function identityCardData() {
+  return `
+    <div class="identity-card-data">
+      <div>
+        <div class="card-data-heading">GREEN CARD</div>
+        <div class="identity-card-row">
+          ${field("STATUS", "READY", false, false, "ready")}
+          ${field("EXPIRES", "TBD")}
+          ${field("SITE CODE", "A123", false, true)}
+        </div>
+        <button class="outline-btn card-trigger" type="button" data-action="open-green-card">View draft green card</button>
+      </div>
+      <div>
+        <div class="card-data-heading">EAD CARD <button class="link card-heading-link" type="button" data-action="open-ead">View card</button></div>
+        <div class="identity-card-row ead-card-row">
+          ${field("STATUS", "PRINTED", false, false, "blue")}
+          ${field("EXPIRES", "December 10, 2019")}
+          ${field("SITE CODE", "A123", false, true)}
+          ${field("PROVISION OF LAW", "B23", false, true)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function backgroundFilters() {
+  const groups = [
+    ["Background checks", "FBI Background Check", "DoD Background Check", "International Search", "US-Visit"],
+    ["Benefits", "I-485 Permanent Residence", "I-765 Work Authorization", "I-94 Travel Visa"],
+    ["Court", "Court dates"],
+    ["Encounters", "Name Check Hits", "Fingerprint Hits", "Arrests"],
+    ["Travel", "Arrivals", "Departures"],
+    ["Saved Filters", "George's Favorite Filter"],
+  ];
+  return `
+    <aside class="background-filters">
+      <label><input type="checkbox" checked /> Select all <span>(9)</span></label>
+      ${groups
+        .map(
+          ([group, ...items]) => `
+            <div class="filter-group">
+              <label><input type="checkbox" checked /> ${group} <span>(${items.length})</span></label>
+              ${items.map((item) => `<label class="filter-child"><input type="checkbox" checked /> ${item}</label>`).join("")}
+            </div>
+          `,
+        )
+        .join("")}
+    </aside>
+  `;
+}
+
+function backgroundRow(row, index) {
+  const showYear = index === 0 || backgroundRows[index - 1].year !== row.year;
+  return `
+    ${showYear ? `<h3 class="timeline-year">${row.year}</h3>` : ""}
+    <article class="timeline-card ${row.expanded ? "expanded" : ""}">
+      <div class="timeline-accent ${row.accent}"></div>
+      <div class="timeline-icon">${row.type.includes("AIR") ? "●" : row.type.includes("BACKGROUND") ? "⌕" : "▣"}</div>
+      <div>
+        <div class="label">${row.type}</div>
+        <div class="timeline-title">${row.title}</div>
+        ${row.expanded ? expandedTimelineDetail() : ""}
+      </div>
+      <div class="timeline-status ${row.status.toLowerCase().replaceAll(" ", "-")}">${row.status}</div>
+      <div>
+        <div class="label">${row.dateLabel}</div>
+        <div>${row.date}</div>
+      </div>
+      <button class="timeline-caret" type="button">⌄</button>
+    </article>
+  `;
+}
+
+function expandedTimelineDetail() {
+  return `
+    <div class="timeline-expanded">
+      <div>Type: Permanent Residence</div>
+      <div class="progress-line"><span></span><span></span><span></span></div>
+      <div class="progress-labels">
+        <div><strong>FILE RECEIVED</strong><br />Dec. 27, 2018</div>
+        <div><strong>ASC APPOINTMENT</strong><br />Jan. 7, 2019</div>
+        <div><strong>ASC APPOINTMENT</strong><br />May 10, 2019</div>
+      </div>
+      <div class="case-links">
+        <div>I-485 DOCUMENT<br />Receipt Number: 12345678<br />Last updated: Jan. 8, 2019<br /><button class="link" type="button">Stacks</button></div>
+        <div>File location: Washington Field Office<br />Last updated: Jan. 8, 2019<br /><button class="link" type="button">Rails</button></div>
+      </div>
+    </div>
+  `;
+}
+
+function bindIdentityEvents() {
+  document.querySelector("[data-action='open-photo']")?.addEventListener("click", () => {
+    state.modal = "photo";
+    renderIdentityDetail();
+  });
+  document.querySelector("[data-action='open-green-card']")?.addEventListener("click", () => {
+    state.modal = "green-card";
+    renderIdentityDetail();
+  });
+  document.querySelector("[data-action='open-ead']")?.addEventListener("click", () => {
+    state.modal = "ead";
+    renderIdentityDetail();
+  });
   bindModalEvents();
 }
 
@@ -581,6 +858,7 @@ function renderToast() {
 function renderModal() {
   if (state.modal === "photo") return photoOverlay();
   if (state.modal === "ead") return eadOverlay();
+  if (state.modal === "green-card") return greenCardOverlay();
   return "";
 }
 
@@ -627,10 +905,43 @@ function eadOverlay() {
   `;
 }
 
+function greenCardOverlay() {
+  return `
+    <div class="overlay-backdrop">
+      <div class="green-card-panel" role="dialog" aria-modal="true" aria-label="Draft green card">
+        <button class="modal-close" type="button" data-action="close-modal">×</button>
+        <h2>Draft green card</h2>
+        <div class="draft-card">
+          <div class="draft-card-band">UNITED STATES OF AMERICA · PERMANENT RESIDENT CARD</div>
+          <div class="draft-card-body">
+            <img src="${portraitAssets.applicant}" alt="" />
+            <div class="draft-fields">
+              <div><span>Surname</span><strong>GARCÍA RAMÍREZ DE ARROYO</strong></div>
+              <div><span>Given Name</span><strong>MARIA TERESA</strong></div>
+              <div class="draft-field-grid">
+                <div><span>USCIS#</span><strong>${applicant.id.replace("A", "")}</strong></div>
+                <div><span>Category</span><strong>K2</strong></div>
+                <div><span>Country of Birth</span><strong>ECUADOR</strong></div>
+                <div><span>Date of Birth</span><strong>16 MAR 1964</strong></div>
+                <div><span>Resident Since</span><strong>DRAFT</strong></div>
+                <div><span>Card Expires</span><strong>TBD</strong></div>
+              </div>
+            </div>
+          </div>
+          <div class="draft-mrz">GRC&lt;GARCIA&lt;RAMIREZ&lt;DE&lt;ARROYO&lt;&lt;MARIA&lt;TERESA&lt;&lt;&lt;<br />${applicant.id}ECU640316F&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;DRAFT</div>
+        </div>
+        <p class="helper">Draft preview generated from the selected identity record. Final production requires evaluator approval.</p>
+      </div>
+    </div>
+  `;
+}
+
 function bindModalEvents() {
   document.querySelector("[data-action='close-modal']")?.addEventListener("click", () => {
     state.modal = null;
-    state.view === "resolve" ? renderResolve() : renderQueue();
+    if (state.view === "resolve") renderResolve();
+    else if (state.view === "identity") renderIdentityDetail();
+    else renderQueue();
   });
 }
 
@@ -641,6 +952,9 @@ function hydrateFromHash() {
     state.view = "resolve";
     state.selectedId = candidates[0].id;
   }
+  if (hash === "#identity" || hash === "#photo" || hash === "#green-card") {
+    state.view = "identity";
+  }
   if (hash === "#resolve-name" || hash === "#resolve-a") {
     state.primaryName = applicant.name;
     state.aliasChoice = "yes";
@@ -650,6 +964,7 @@ function hydrateFromHash() {
   }
   if (hash === "#photo") state.modal = "photo";
   if (hash === "#ead") state.modal = "ead";
+  if (hash === "#green-card") state.modal = "green-card";
   if (hash === "#pending") {
     state.submitted = true;
     state.selectedId = null;
@@ -658,4 +973,6 @@ function hydrateFromHash() {
 }
 
 hydrateFromHash();
-state.view === "resolve" ? renderResolve() : renderQueue();
+if (state.view === "resolve") renderResolve();
+else if (state.view === "identity") renderIdentityDetail();
+else renderQueue();
