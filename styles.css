@@ -1364,6 +1364,13 @@ h3 {
   margin-bottom: 10px;
 }
 
+.filter-count {
+  margin: -2px 0 14px 19px;
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 600;
+}
+
 .background-filters .ui-checkbox-label {
   position: relative;
   display: flex;
@@ -1409,8 +1416,25 @@ h3 {
   background: #1476d4;
 }
 
+.ui-checkbox-input:indeterminate + .ui-checkbox-box {
+  border-color: #1476d4;
+  background: #1476d4;
+}
+
 .ui-checkbox-input:checked + .ui-checkbox-box .ui-checkbox-check {
   opacity: 1;
+}
+
+.ui-checkbox-input:indeterminate + .ui-checkbox-box .ui-checkbox-check {
+  opacity: 0;
+}
+
+.ui-checkbox-input:indeterminate + .ui-checkbox-box::after {
+  content: "";
+  width: 6px;
+  height: 2px;
+  border-radius: 2px;
+  background: #fff;
 }
 
 .ui-checkbox-label:hover .ui-checkbox-box {
@@ -1429,6 +1453,24 @@ h3 {
 
 .timeline-list {
   min-width: 0;
+}
+
+.timeline-empty {
+  min-height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px dashed #bdc9d1;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.timeline-empty .material-symbols-outlined {
+  font-size: 20px;
 }
 
 .timeline-year {
@@ -1825,6 +1867,12 @@ h3 {
   border-color: #304350;
   background: #14222d;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.mod-shell.dark-mode .timeline-empty {
+  border-color: #344b59;
+  background: rgba(20, 34, 45, 0.72);
+  color: #a8b8c4;
 }
 
 .mod-shell.dark-mode .timeline-card:hover,

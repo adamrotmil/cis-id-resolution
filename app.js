@@ -108,6 +108,7 @@ const state = {
   activeIdentityKey: "maria-teresa",
   identityTrail: [],
   aliasesExpanded: false,
+  activeHistoryFilters: null,
   attachments: [],
   undoSnapshot: null,
 };
@@ -776,17 +777,110 @@ Object.assign(identityProfiles, {
 });
 
 const backgroundRows = [
-  { year: "2019", type: "PERMANENT RESIDENCE", title: "I-485", status: "PENDING", dateLabel: "RECEIVED", date: "April 19, 2019", accent: "orange" },
-  { year: "2019", type: "ASC APPOINTMENT", title: "Fort Lauderdale ASC", status: "COMPLETED", dateLabel: "TRANSACTION DATE", date: "April 19, 2019", accent: "blue" },
-  { year: "2019", type: "WORK AUTHORIZATION", title: "I-765", status: "APPROVED", dateLabel: "PROCESS DATE", date: "March 20, 2019", accent: "blue" },
-  { year: "2019", type: "AIR ENTRY", title: "Miami International (MIA)", status: "", dateLabel: "ENTRY DATE", date: "March 15, 2019", accent: "blue" },
-  { year: "2019", type: "TSA", title: "Miami International (MIA)", status: "", dateLabel: "ENCOUNTER DATE", date: "March 15, 2019", accent: "blue" },
-  { year: "2017", type: "AIR EXIT", title: "Dulles International (IAD)", status: "", dateLabel: "EXIT DATE", date: "April 20, 2017", accent: "gray" },
-  { year: "2016", type: "IMMIGRATION COURT", title: "IJ Decision", status: "APPROVED", dateLabel: "COURT DATE", date: "December 20, 2016", accent: "blue" },
-  { year: "2016", type: "BACKGROUND CHECK", title: "FBI", status: "WATCHLIST", dateLabel: "RESPONSE DATE", date: "October 10, 2016", accent: "red" },
-  { year: "2016", type: "BACKGROUND CHECK", title: "DoD", status: "NO HIT", dateLabel: "RESPONSE DATE", date: "October 10, 2016", accent: "blue" },
-  { year: "2016", type: "INTERNATIONAL SEARCH", title: "Canada", status: "MATCH", dateLabel: "RESPONSE DATE", date: "October 1, 2016", accent: "red" },
+  { year: "2019", type: "PERMANENT RESIDENCE", title: "I-485", status: "PENDING", dateLabel: "RECEIVED", date: "April 19, 2019", accent: "orange", filterKeys: ["i-485"] },
+  { year: "2019", type: "ASC APPOINTMENT", title: "Fort Lauderdale ASC", status: "COMPLETED", dateLabel: "TRANSACTION DATE", date: "April 19, 2019", accent: "blue", filterKeys: ["fingerprint-hits"] },
+  { year: "2019", type: "WORK AUTHORIZATION", title: "I-765", status: "APPROVED", dateLabel: "PROCESS DATE", date: "March 20, 2019", accent: "blue", filterKeys: ["i-765"] },
+  { year: "2019", type: "AIR ENTRY", title: "Miami International (MIA)", status: "", dateLabel: "ENTRY DATE", date: "March 15, 2019", accent: "blue", filterKeys: ["arrivals", "i-94"] },
+  { year: "2019", type: "TSA", title: "Miami International (MIA)", status: "", dateLabel: "ENCOUNTER DATE", date: "March 15, 2019", accent: "blue", filterKeys: ["us-visit", "name-check-hits"] },
+  { year: "2017", type: "AIR EXIT", title: "Dulles International (IAD)", status: "", dateLabel: "EXIT DATE", date: "April 20, 2017", accent: "gray", filterKeys: ["departures", "i-94"] },
+  { year: "2016", type: "IMMIGRATION COURT", title: "IJ Decision", status: "APPROVED", dateLabel: "COURT DATE", date: "December 20, 2016", accent: "blue", filterKeys: ["court-dates"] },
+  { year: "2016", type: "BACKGROUND CHECK", title: "FBI", status: "WATCHLIST", dateLabel: "RESPONSE DATE", date: "October 10, 2016", accent: "red", filterKeys: ["fbi-background-check", "name-check-hits", "george-favorite"] },
+  { year: "2016", type: "BACKGROUND CHECK", title: "DoD", status: "NO HIT", dateLabel: "RESPONSE DATE", date: "October 10, 2016", accent: "blue", filterKeys: ["dod-background-check"] },
+  { year: "2016", type: "INTERNATIONAL SEARCH", title: "Canada", status: "MATCH", dateLabel: "RESPONSE DATE", date: "October 1, 2016", accent: "red", filterKeys: ["international-search", "george-favorite"] },
 ];
+
+const historyFilterGroups = [
+  {
+    key: "background-checks",
+    label: "Background checks",
+    children: [
+      ["fbi-background-check", "FBI Background Check"],
+      ["dod-background-check", "DoD Background Check"],
+      ["international-search", "International Search"],
+      ["us-visit", "US-Visit"],
+    ],
+  },
+  {
+    key: "benefits",
+    label: "Benefits",
+    children: [
+      ["i-485", "I-485 Permanent Residence"],
+      ["i-765", "I-765 Work Authorization"],
+      ["i-94", "I-94 Travel Visa"],
+    ],
+  },
+  { key: "court", label: "Court", children: [["court-dates", "Court dates"]] },
+  {
+    key: "encounters",
+    label: "Encounters",
+    children: [
+      ["name-check-hits", "Name Check Hits"],
+      ["fingerprint-hits", "Fingerprint Hits"],
+      ["arrests", "Arrests"],
+    ],
+  },
+  {
+    key: "travel",
+    label: "Travel",
+    children: [
+      ["arrivals", "Arrivals"],
+      ["departures", "Departures"],
+    ],
+  },
+  { key: "saved-filters", label: "Saved Filters", children: [["george-favorite", "George's Favorite Filter"]] },
+];
+
+function allHistoryFilterKeys() {
+  return historyFilterGroups.flatMap((group) => group.children.map(([key]) => key));
+}
+
+function currentHistoryFilterSet() {
+  return state.activeHistoryFilters === null ? new Set(allHistoryFilterKeys()) : new Set(state.activeHistoryFilters);
+}
+
+function historyFilterCount(key) {
+  return backgroundRows.filter((row) => row.filterKeys?.includes(key)).length;
+}
+
+function filteredBackgroundRows() {
+  if (state.activeHistoryFilters === null) {
+    return backgroundRows.map((row, originalIndex) => ({ ...row, originalIndex }));
+  }
+  const active = currentHistoryFilterSet();
+  return backgroundRows
+    .map((row, originalIndex) => ({ ...row, originalIndex }))
+    .filter((row) => row.filterKeys?.some((key) => active.has(key)));
+}
+
+function setHistoryFilterSelection(nextKeys) {
+  const allKeys = allHistoryFilterKeys();
+  const uniqueKeys = [...new Set(nextKeys)].filter((key) => allKeys.includes(key));
+  state.activeHistoryFilters = uniqueKeys.length === allKeys.length ? null : uniqueKeys;
+  if (state.expandedHistoryIndex !== null && !filteredBackgroundRows().some((row) => row.originalIndex === state.expandedHistoryIndex)) {
+    state.expandedHistoryIndex = null;
+  }
+}
+
+function toggleHistoryFilter(filterKey, kind, checked) {
+  if (kind === "all") {
+    setHistoryFilterSelection(checked ? allHistoryFilterKeys() : []);
+    return;
+  }
+
+  const next = currentHistoryFilterSet();
+  const group = historyFilterGroups.find((item) => item.key === filterKey);
+  const targetKeys = group ? group.children.map(([key]) => key) : [filterKey];
+
+  targetKeys.forEach((key) => {
+    if (checked) {
+      next.add(key);
+    } else {
+      next.delete(key);
+    }
+  });
+
+  setHistoryFilterSelection([...next]);
+}
 
 const timelineIcons = {
   "PERMANENT RESIDENCE": "assignment_ind",
@@ -1133,10 +1227,10 @@ function checkboxComponent(options = {}) {
 }
 
 function filterCheckbox(label, options = {}) {
-  const { count = "", child = false } = options;
+  const { count = "", child = false, checked = true, filterKey = "", kind = "child" } = options;
   return `
     <label class="ui-checkbox-label ${child ? "filter-child" : ""}">
-      <input class="ui-checkbox-input" type="checkbox" checked />
+      <input class="ui-checkbox-input" type="checkbox" ${checked ? "checked" : ""} data-history-filter="${filterKey}" data-filter-kind="${kind}" />
       <span class="ui-checkbox-box" aria-hidden="true">${icon("check", "ui-checkbox-check")}</span>
       <span>${label}${count ? ` <span>(${count})</span>` : ""}</span>
     </label>
@@ -1758,6 +1852,7 @@ function renderIdentityDetail() {
   const profile = currentIdentityProfile();
   const visibleAliases = state.aliasesExpanded ? profile.aliases : profile.aliases.slice(0, 3);
   const hiddenAliasCount = profile.aliases.length - visibleAliases.length;
+  const visibleBackgroundRows = filteredBackgroundRows();
   const content = `
     ${identityBreadcrumb(profile)}
     <main class="identity-detail-page">
@@ -1863,7 +1958,11 @@ function renderIdentityDetail() {
         <div class="background-layout">
           ${backgroundFilters()}
           <div class="timeline-list">
-            ${backgroundRows.map((row, index) => backgroundRow(row, index, backgroundRows, profile)).join("")}
+            ${
+              visibleBackgroundRows.length
+                ? visibleBackgroundRows.map((row, index) => backgroundRow(row, index, visibleBackgroundRows, profile)).join("")
+                : `<div class="timeline-empty">${icon("filter_alt_off")}No history items match the selected filters.</div>`
+            }
           </div>
         </div>
       </section>
@@ -1929,25 +2028,31 @@ function identityCardData(profile = currentIdentityProfile()) {
 }
 
 function backgroundFilters() {
-  const groups = [
-    ["Background checks", "FBI Background Check", "DoD Background Check", "International Search", "US-Visit"],
-    ["Benefits", "I-485 Permanent Residence", "I-765 Work Authorization", "I-94 Travel Visa"],
-    ["Court", "Court dates"],
-    ["Encounters", "Name Check Hits", "Fingerprint Hits", "Arrests"],
-    ["Travel", "Arrivals", "Departures"],
-    ["Saved Filters", "George's Favorite Filter"],
-  ];
+  const selected = currentHistoryFilterSet();
+  const allKeys = allHistoryFilterKeys();
+  const allSelected = allKeys.every((key) => selected.has(key));
+  const visibleCount = filteredBackgroundRows().length;
   return `
     <aside class="background-filters">
-      ${filterCheckbox("Select all", { count: 9 })}
-      ${groups
+      ${filterCheckbox("Select all", { count: backgroundRows.length, checked: allSelected, filterKey: "all", kind: "all" })}
+      <div class="filter-count">${visibleCount} of ${backgroundRows.length} items shown</div>
+      ${historyFilterGroups
         .map(
-          ([group, ...items]) => `
+          (group) => {
+            const childKeys = group.children.map(([key]) => key);
+            const groupChecked = childKeys.every((key) => selected.has(key));
+            const groupCount = childKeys.reduce((total, key) => total + historyFilterCount(key), 0);
+            return `
             <div class="filter-group">
-              ${filterCheckbox(group, { count: items.length })}
-              ${items.map((item) => filterCheckbox(item, { child: true })).join("")}
+              ${filterCheckbox(group.label, { count: groupCount, checked: groupChecked, filterKey: group.key, kind: "group" })}
+              ${group.children
+                .map(([key, label]) =>
+                  filterCheckbox(label, { count: historyFilterCount(key), child: true, checked: selected.has(key), filterKey: key }),
+                )
+                .join("")}
             </div>
-          `,
+          `;
+          },
         )
         .join("")}
     </aside>
@@ -1957,10 +2062,11 @@ function backgroundFilters() {
 function backgroundRow(row, index, rows = backgroundRows, profile = currentIdentityProfile()) {
   const showYear = index === 0 || rows[index - 1].year !== row.year;
   const icon = timelineIcons[row.type] || "article";
-  const expanded = state.expandedHistoryIndex === index;
+  const rowIndex = row.originalIndex ?? index;
+  const expanded = state.expandedHistoryIndex === rowIndex;
   return `
     ${showYear ? `<h3 class="timeline-year">${row.year}</h3>` : ""}
-    <article class="timeline-card ${expanded ? "expanded" : ""}" data-history-index="${index}" role="button" tabindex="0" aria-expanded="${expanded}">
+    <article class="timeline-card ${expanded ? "expanded" : ""}" data-history-index="${rowIndex}" role="button" tabindex="0" aria-expanded="${expanded}">
       <div class="timeline-accent ${row.accent}"></div>
       <div class="timeline-icon" aria-hidden="true">
         <span class="material-symbols-outlined">${icon}</span>
@@ -1968,7 +2074,7 @@ function backgroundRow(row, index, rows = backgroundRows, profile = currentIdent
       <div class="timeline-description">
         <div class="label">${row.type}</div>
         <div class="timeline-title">${row.title}</div>
-        ${expanded ? expandedTimelineDetail(row, index, profile) : ""}
+        ${expanded ? expandedTimelineDetail(row, rowIndex, profile) : ""}
       </div>
       <div class="timeline-status ${row.status.toLowerCase().replaceAll(" ", "-")}">${row.status}</div>
       <div class="timeline-date">
@@ -2083,6 +2189,13 @@ function bindIdentityEvents() {
       renderIdentityDetail();
     });
   });
+  document.querySelectorAll("[data-history-filter]").forEach((input) => {
+    input.addEventListener("change", () => {
+      toggleHistoryFilter(input.dataset.historyFilter, input.dataset.filterKind, input.checked);
+      rerenderIdentityPreservingScroll();
+    });
+  });
+  syncHistoryFilterIndeterminate();
   document.querySelectorAll(".timeline-card").forEach((row) => {
     const toggleRow = (event) => {
       if (event.target.closest?.(".timeline-expanded .link")) return;
@@ -2116,6 +2229,29 @@ function bindIdentityEvents() {
   });
   bindIdentityNavigationEvents();
   bindModalEvents();
+}
+
+function rerenderIdentityPreservingScroll() {
+  const scrollY = window.scrollY;
+  renderIdentityDetail();
+  requestAnimationFrame(() => window.scrollTo({ top: scrollY }));
+}
+
+function syncHistoryFilterIndeterminate() {
+  const selected = currentHistoryFilterSet();
+  const allKeys = allHistoryFilterKeys();
+  const selectedTotal = allKeys.filter((key) => selected.has(key)).length;
+  const allInput = document.querySelector("[data-filter-kind='all']");
+  if (allInput) {
+    allInput.indeterminate = selectedTotal > 0 && selectedTotal < allKeys.length;
+  }
+  document.querySelectorAll("[data-filter-kind='group']").forEach((input) => {
+    const group = historyFilterGroups.find((item) => item.key === input.dataset.historyFilter);
+    if (!group) return;
+    const childKeys = group.children.map(([key]) => key);
+    const selectedCount = childKeys.filter((key) => selected.has(key)).length;
+    input.indeterminate = selectedCount > 0 && selectedCount < childKeys.length;
+  });
 }
 
 function renderToast() {
