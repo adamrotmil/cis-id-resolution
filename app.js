@@ -82,16 +82,17 @@ const state = {
 const app = document.querySelector("#app");
 
 const portraitAssets = {
-  applicant: "assets/applicant-photo.png",
-  main: "assets/photo-main-clean.png",
-  julia: "assets/photo-thumb-02.png",
-  victoria: "assets/photo-thumb-03.png",
-  large: "assets/identity-photo-large.png",
+  applicant: "assets/portrait-applicant-hi.png",
+  main: "assets/portrait-applicant-hi.png",
+  julia: "assets/portrait-julia-hi.png",
+  victoria: "assets/portrait-victoria-hi.png",
+  maria: "assets/portrait-maria-hi.png",
+  large: "assets/portrait-applicant-hi.png",
   thumbs: [
-    "assets/photo-thumb-01.png",
-    "assets/photo-thumb-02.png",
-    "assets/photo-thumb-03.png",
-    "assets/photo-thumb-04.png",
+    "assets/portrait-applicant-hi.png",
+    "assets/portrait-julia-hi.png",
+    "assets/portrait-victoria-hi.png",
+    "assets/portrait-maria-hi.png",
     "assets/photo-thumb-05.png",
     "assets/photo-thumb-06.png",
     "assets/photo-thumb-07.png",
@@ -163,8 +164,8 @@ function modShell(content) {
 function portraitAsset(index = 0) {
   if (index === 1) return portraitAssets.julia;
   if (index === 2) return portraitAssets.victoria;
-  if (index === 3) return portraitAssets.thumbs[3];
-  if (index === 4) return portraitAssets.thumbs[4];
+  if (index === 3) return portraitAssets.maria;
+  if (index === 4) return portraitAssets.main;
   return portraitAssets.main;
 }
 
