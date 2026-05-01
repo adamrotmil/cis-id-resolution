@@ -647,6 +647,11 @@ h3 {
   padding: 22px 28px 24px;
 }
 
+.compact-match .selected-badge {
+  right: 24px;
+  top: 20px;
+}
+
 .compact-match .candidate-top {
   grid-template-columns: 80px 1fr;
 }
@@ -1641,9 +1646,9 @@ h3 {
   left: 0;
   right: 0;
   bottom: 0;
-  min-height: 122px;
+  min-height: 132px;
   display: grid;
-  grid-template-columns: 388px 1fr 300px;
+  grid-template-columns: 388px minmax(420px, 1fr) 300px;
   align-items: center;
   gap: 24px;
   padding: 24px 44px;
@@ -1696,6 +1701,10 @@ h3 {
   line-height: 1.35;
 }
 
+.summary-subtitle {
+  max-width: 320px;
+}
+
 .match-chips {
   display: flex;
   gap: 10px;
@@ -1715,6 +1724,41 @@ h3 {
   background: var(--teal-pale);
   font-size: 11px;
   font-weight: 700;
+}
+
+.cluster-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cluster-evidence-item {
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid #cce6ec;
+  border-radius: 6px;
+  background: #f4fbfd;
+}
+
+.cluster-evidence-item strong {
+  display: block;
+  color: var(--teal);
+  font-size: 10.5px;
+  line-height: 1;
+}
+
+.cluster-evidence-item span {
+  display: block;
+  margin-top: 6px;
+  color: #34444f;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.cluster-copy {
+  margin: 8px 0 0;
 }
 
 .summary-actions {
@@ -1801,6 +1845,18 @@ h3 {
   min-height: 286px;
 }
 
+.selected-identity-list.multi {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 44px;
+}
+
+.selected-identity-list.multi .selected-identity-card {
+  min-height: 0;
+  margin-bottom: 0;
+  padding: 22px 30px;
+}
+
 .compact-card {
   display: grid;
   grid-template-columns: 90px 1fr;
@@ -1826,6 +1882,12 @@ h3 {
 
 .selected-identity-card .field-row.compact {
   margin-bottom: 24px;
+}
+
+.selected-card-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .step {

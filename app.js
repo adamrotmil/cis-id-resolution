@@ -76,6 +76,7 @@ const savedViewingMode = (() => {
 const state = {
   view: "queue",
   selectedId: null,
+  selectedIds: [],
   primaryName: "",
   aliasChoice: "",
   primaryA: "",
@@ -237,6 +238,63 @@ function candidateId(candidate) {
   return `<span class="candidate-id ${matchingId ? "id-highlight" : ""}">${candidate.id}</span>`;
 }
 
+function getSelectedIds() {
+  if (Array.isArray(state.selectedIds) && state.selectedIds.length) return state.selectedIds;
+  return state.selectedId ? [state.selectedId] : [];
+}
+
+function setSelectedIds(ids) {
+  state.selectedIds = [...new Set(ids.filter(Boolean))];
+  state.selectedId = state.selectedIds[0] || null;
+}
+
+function selectedCandidates() {
+  const ids = getSelectedIds();
+  return candidates.filter((candidate) => ids.includes(candidate.id));
+}
+
+function isCandidateSelected(candidate) {
+  return getSelectedIds().includes(candidate.id);
+}
+
+function toggleCandidateSelection(id) {
+  const ids = getSelectedIds();
+  setSelectedIds(ids.includes(id) ? ids.filter((selectedId) => selectedId !== id) : [...ids, id]);
+}
+
+function normalized(value = "") {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function candidateMatchLabels(candidate) {
+  const labels = [];
+  if (candidate.dob === applicant.dob) labels.push("DOB");
+  if (candidate.fin === applicant.fin) labels.push("FIN");
+  if (candidate.cob === applicant.cob) labels.push("COB");
+  const applicantParentTokens = new Set(applicant.parents.flatMap((parent) => normalized(parent).split(/\s+/)).filter((token) => token.length > 3));
+  const hasParentOverlap = (candidate.parents || []).some((parent) =>
+    normalized(parent)
+      .split(/\s+/)
+      .some((token) => applicantParentTokens.has(token)),
+  );
+  if (hasParentOverlap) labels.push("Parents");
+  if (candidate.id === applicant.id) labels.push("A#");
+  return labels;
+}
+
+function evidenceSummary(selected) {
+  const labels = ["DOB", "FIN", "COB", "Parents", "A#"];
+  return labels
+    .map((label) => {
+      const count = selected.filter((candidate) => candidateMatchLabels(candidate).includes(label)).length;
+      return { label, count };
+    })
+    .filter((item) => item.count > 0);
+}
+
 function attrsToString(attrs = {}) {
   return Object.entries(attrs)
     .filter(([, value]) => value !== false && value !== null && value !== undefined)
@@ -372,7 +430,7 @@ function field(label, value, highlighted = false, info = false, tone = "") {
 
 function renderQueue() {
   syncBodyViewingMode("light");
-  const selected = Boolean(state.selectedId);
+  const selected = selectedCandidates();
   const pendingCandidate = state.submitted ? { ...candidates[0], pending: true } : candidates[0];
   const content = `
     <main class="queue-grid">
@@ -411,11 +469,11 @@ function renderQueue() {
 }
 
 function candidateRow(candidate, index, expanded = false) {
-  const isSelected = state.selectedId === candidate.id;
+  const isSelected = isCandidateSelected(candidate);
   return `
     <div class="candidate-row">
       <div class="check-wrap">
-        ${checkboxComponent({ selected: isSelected, label: `Select ${candidate.id}`, action: "toggle-select" })}
+        ${checkboxComponent({ selected: isSelected, label: `Select ${candidate.id}`, action: "toggle-select", attrs: { "data-candidate-id": candidate.id } })}
       </div>
       <article class="candidate-card ${isSelected ? "selected" : ""}">
         ${isSelected ? badge("Selected", { className: "selected-badge" }) : ""}
@@ -479,10 +537,12 @@ function candidateRow(candidate, index, expanded = false) {
 }
 
 function compactCandidate(candidate, index) {
+  const isSelected = isCandidateSelected(candidate);
   return `
     <div class="candidate-row" style="margin-top: 0">
-      <div class="check-wrap">${checkboxComponent({ label: `Select ${candidate.id}` })}</div>
-      <article class="candidate-card compact-match">
+      <div class="check-wrap">${checkboxComponent({ selected: isSelected, label: `Select ${candidate.id}`, action: "toggle-select", attrs: { "data-candidate-id": candidate.id } })}</div>
+      <article class="candidate-card compact-match ${isSelected ? "selected" : ""}">
+        ${isSelected ? badge("Selected", { className: "selected-badge" }) : ""}
         <p class="card-note">${candidate.reason}</p>
         <div class="candidate-top">
           <div class="portrait-card">
@@ -527,29 +587,52 @@ function cardData() {
   `;
 }
 
-function summaryBar(visible) {
+function summaryBar(selected = []) {
+  const count = selected.length;
+  const visible = count > 0;
+  const title = `${count} ${count === 1 ? "identity" : "identities"} selected`;
+  const subtitle =
+    count === 1
+      ? `${selected[0].id} · ${selected[0].name}`
+      : `Resolution cluster: ${selected.map((candidate) => candidate.id).join(" · ")}`;
+  const evidence = evidenceSummary(selected);
+  const evidenceContent =
+    count <= 1
+      ? `<div class="match-chips">
+          ${candidateMatchLabels(selected[0] || candidates[0])
+            .map((label) => chip(label, "match-chip"))
+            .join("")}
+          <span class="summary-copy">Similar ${candidateMatchLabels(selected[0] || candidates[0]).join(", ")}${count ? "" : "."}</span>
+        </div>`
+      : `<div class="cluster-evidence-grid">
+          ${evidence
+            .map(
+              ({ label, count: matchCount }) => `
+                <div class="cluster-evidence-item">
+                  <strong>${label}</strong>
+                  <span>${matchCount} of ${count} ${matchCount === 1 ? "candidate" : "candidates"}</span>
+                </div>
+              `,
+            )
+            .join("")}
+        </div>
+        <p class="summary-copy cluster-copy">Treating these as possible fragments of the same identity. Resolve packages each candidate's evidence separately for final evaluator review.</p>`;
   return `
     <aside class="summary-bar ${visible ? "visible" : ""}" aria-live="polite">
       <div class="selected-summary">
         <div class="check-circle">${icon("check")}</div>
         <div>
-          <div class="summary-title">1 identity selected</div>
-          <div class="summary-subtitle">A100001678 · Maria Teresa GARCÍA RAMÍREZ</div>
+          <div class="summary-title">${title}</div>
+          <div class="summary-subtitle">${subtitle}</div>
         </div>
       </div>
       <div>
-        <div class="label">Matching datapoints</div>
-        <div class="match-chips">
-          ${chip("DOB", "match-chip")}
-          ${chip("FIN", "match-chip")}
-          ${chip("COB", "match-chip")}
-          ${chip("Parents", "match-chip")}
-          <span class="summary-copy">Similar DOB, FIN, COB, and parents</span>
-        </div>
+        <div class="label">${count > 1 ? "Cluster evidence" : "Matching datapoints"}</div>
+        ${evidenceContent}
       </div>
       <div class="summary-actions">
         ${buttonComponent("Clear", { variant: "secondary", action: "clear-selection" })}
-        ${buttonComponent("Resolve", { variant: "primary", action: "resolve" })}
+        ${buttonComponent(count > 1 ? "Resolve cluster" : "Resolve", { variant: "primary", action: "resolve" })}
       </div>
     </aside>
   `;
@@ -572,15 +655,16 @@ function setView(view, hash = "") {
 function bindQueueEvents() {
   document.querySelectorAll("[data-action='toggle-select']").forEach((button) => {
     button.addEventListener("click", () => {
-      state.selectedId = state.selectedId ? null : candidates[0].id;
+      toggleCandidateSelection(button.dataset.candidateId || candidates[0].id);
       renderQueue();
     });
   });
   document.querySelector("[data-action='clear-selection']")?.addEventListener("click", () => {
-    state.selectedId = null;
+    setSelectedIds([]);
     renderQueue();
   });
   document.querySelector("[data-action='resolve']")?.addEventListener("click", () => {
+    if (!selectedCandidates().length) return;
     setView("resolve", "#resolve");
     renderResolve();
   });
@@ -607,56 +691,74 @@ function bindQueueEvents() {
 
 function renderResolve() {
   syncBodyViewingMode("light");
+  if (!selectedCandidates().length) setSelectedIds([candidates[0].id]);
+  const selected = selectedCandidates();
   const valid = Boolean(state.primaryName && state.primaryA);
   const content = `
     <main class="resolve-page">
       <div class="resolve-content">
         <section class="resolve-intro">
           <h1>Assign primary information</h1>
-          <p class="helper">Review the identities to link and select the primary information. You will have one more chance to review your requested updates.</p>
+          <p class="helper">Review the ${selected.length === 1 ? "identity" : "identity cluster"} to link and select the primary information. Each selected candidate will be included as a separate evidence fragment for final evaluator review.</p>
         </section>
         ${applicantBlock(true)}
-        <h3 class="resolve-section-title">Selected identity</h3>
+        <h3 class="resolve-section-title">${selected.length === 1 ? "Selected identity" : "Selected identities"}</h3>
         ${selectedIdentityCard()}
         ${resolveSteps(valid)}
       </div>
     </main>
   `;
   app.innerHTML = shell(content, { crumbs: ["Resolve identity", "Link"] }) + renderModal();
+  window.scrollTo(0, 0);
   bindResolveEvents();
 }
 
 function selectedIdentityCard() {
-  const candidate = candidates[0];
+  const selected = selectedCandidates();
+  const list = selected.length ? selected : [candidates[0]];
   return `
-    <article class="selected-identity-card">
-      <p class="card-note">${candidate.reason.replace("Parents", "PARENT 1 and PARENT 2")}</p>
-      <div class="compact-card">
-        <div class="portrait-card">
-          ${portrait("candidate", 0, "small")}
-          ${buttonComponent("View identity", { variant: "outline", action: "open-identity" })}
-        </div>
-        <div>
-          <div>${candidateId(candidate)}${statusBadge(candidate.status)}</div>
-          <div class="candidate-name">${candidate.name}</div>
-          <div class="field-row compact">
-            ${field("DOB", candidate.dob, true)}
-            ${field("FIN", candidate.fin, true)}
-            ${field("COB", candidate.cob, true)}
-          </div>
-          <div class="parents match-parents">
-            <div class="label">PARENTS</div>
-            <div class="copy"><span class="highlight">Mia Ramírez</span><br /><span class="highlight">Jose García</span></div>
-          </div>
-        </div>
-      </div>
-    </article>
+    <div class="selected-identity-list ${list.length > 1 ? "multi" : ""}">
+      ${list
+        .map((candidate) => {
+          const index = candidates.findIndex((item) => item.id === candidate.id);
+          const matches = candidateMatchLabels(candidate);
+          return `
+            <article class="selected-identity-card">
+              <p class="card-note">${candidate.reason.replace("Parents", "PARENT 1 and PARENT 2")}</p>
+              <div class="compact-card">
+                <div class="portrait-card">
+                  ${portrait("candidate", index, "small")}
+                  ${buttonComponent("View identity", { variant: "outline", action: "open-identity" })}
+                </div>
+                <div>
+                  <div>${candidateId(candidate)}${statusBadge(candidate.status)}</div>
+                  <div class="candidate-name">${candidate.name}</div>
+                  <div class="field-row compact">
+                    ${field("DOB", candidate.dob, matches.includes("DOB"))}
+                    ${field("FIN", candidate.fin, matches.includes("FIN"))}
+                    ${field("COB", candidate.cob, matches.includes("COB"))}
+                  </div>
+                  <div class="selected-card-evidence">
+                    ${matches.map((label) => chip(label, "match-chip")).join("")}
+                  </div>
+                </div>
+              </div>
+            </article>
+          `;
+        })
+        .join("")}
+    </div>
   `;
 }
 
 function resolveSteps(valid) {
   const nameComplete = Boolean(state.primaryName);
   const aComplete = Boolean(state.primaryA);
+  const selected = selectedCandidates();
+  const nameOptions = [...new Set([applicant.name, ...selected.map((candidate) => candidate.name)])];
+  const aOptions = [...new Set([applicant.id, ...selected.map((candidate) => candidate.id)])];
+  const nonPrimaryNames = nameOptions.filter((name) => name !== state.primaryName);
+  const remainingA = remainingANumbers();
   return `
     <section class="step">
       <div class="step-header">
@@ -665,13 +767,13 @@ function resolveSteps(valid) {
       </div>
       <p class="helper">Choose which name should become the primary identity name. Alias options stay hidden until a primary name is selected.</p>
       <div class="radio-list">
-        ${radioOption("primary-name", applicant.name, applicant.name, state.primaryName)}
-        ${radioOption("primary-name", candidates[0].name, candidates[0].name, state.primaryName)}
+        ${nameOptions.map((name) => radioOption("primary-name", name, name, state.primaryName)).join("")}
       </div>
       ${
         nameComplete
           ? `<div class="disclosure">
-              <h3>Add "Maria Teresa GARCÍA RAMÍREZ" as an alias?</h3>
+              <h3>Keep the non-primary selected names as aliases?</h3>
+              ${nonPrimaryNames.length ? `<p class="helper">${nonPrimaryNames.join(" · ")}</p>` : ""}
               <div class="radio-list">
                 ${radioOption("alias-choice", "Yes", "yes", state.aliasChoice)}
                 ${radioOption("alias-choice", "No", "no", state.aliasChoice)}
@@ -687,22 +789,23 @@ function resolveSteps(valid) {
       </div>
       ${
         nameComplete
-          ? `<p class="helper">Select the primary A-number before deciding whether to keep the other A-number as consolidated.</p>
+          ? `<p class="helper">Select the primary A-number before deciding whether to keep the remaining selected A-numbers as consolidated.</p>
              <div class="radio-list">
-              ${radioOption("primary-a", applicant.id, applicant.id, state.primaryA)}
-              ${radioOption("primary-a", candidates[0].id, candidates[0].id, state.primaryA)}
+              ${aOptions.map((id) => radioOption("primary-a", id, id, state.primaryA)).join("")}
              </div>`
           : `<p class="helper">This section unlocks after a primary name has been assigned.</p>`
       }
       ${
-        aComplete
+        aComplete && remainingA
           ? `<div class="disclosure">
-              <h3>Keep "${otherANumber()}" as a consolidated A# for this identity?</h3>
+              <h3>Keep "${remainingA}" as consolidated A#${remainingA.includes(",") ? "s" : ""} for this identity?</h3>
               <div class="radio-list">
                 ${radioOption("consolidated-a", "Yes", "yes", state.consolidatedA)}
                 ${radioOption("consolidated-a", "No", "no", state.consolidatedA)}
               </div>
             </div>`
+          : aComplete
+            ? `<div class="disclosure"><p class="helper">No additional A-numbers need to be consolidated for this package.</p></div>`
           : ""
       }
     </section>
@@ -711,7 +814,7 @@ function resolveSteps(valid) {
         <h3>3. Provide a reason for linking these identities and any additional information.</h3>
       </div>
       <p class="helper">${valid ? "Notes will be included for final evaluator review." : "Complete the primary name and A-number selections to add final notes."}</p>
-      <textarea class="notes-field" ${valid ? "" : "disabled"} placeholder="Add resolution notes for final evaluator review">${state.notes}</textarea>
+      <textarea class="notes-field" ${valid ? "" : "disabled"} placeholder="Add why these selected fragments appear to refer to the same identity">${state.notes}</textarea>
       ${
         valid
           ? `<div class="attachment-row">
@@ -737,8 +840,9 @@ function radioOption(name, label, value, selectedValue) {
   `;
 }
 
-function otherANumber() {
-  return state.primaryA === applicant.id ? candidates[0].id : applicant.id;
+function remainingANumbers() {
+  const ids = [...new Set([applicant.id, ...selectedCandidates().map((candidate) => candidate.id)])].filter((id) => id !== state.primaryA);
+  return ids.join(", ");
 }
 
 function bindResolveEvents() {
@@ -776,14 +880,19 @@ function bindResolveEvents() {
     renderQueue();
   });
   document.querySelector("[data-action='submit-resolution']")?.addEventListener("click", () => {
+    const selectedCount = selectedCandidates().length || 1;
     state.submitting = true;
     renderResolve();
     window.setTimeout(() => {
       state.submitting = false;
       state.submitted = true;
-      state.selectedId = null;
+      setSelectedIds([]);
       state.view = "queue";
-      state.toast = "Resolution package sent";
+      state.toast = {
+        title: "Resolution package sent",
+        body: `${selectedCount} linked identity ${selectedCount === 1 ? "candidate" : "candidates"} and your notes were sent to a final evaluator.`,
+        status: "Pending final resolution",
+      };
       history.replaceState(null, "", "#pending");
       renderQueue();
     }, 850);
@@ -1096,7 +1205,7 @@ function bindIdentityEvents() {
   document.querySelector("[data-action='return-queue']")?.addEventListener("click", () => {
     state.view = "queue";
     state.modal = null;
-    history.replaceState(null, "", state.selectedId ? "#selected" : "#queue");
+    history.replaceState(null, "", getSelectedIds().length ? "#selected" : "#queue");
     renderQueue();
   });
   document.querySelectorAll("[data-action='set-viewing-mode']").forEach((button) => {
@@ -1368,10 +1477,10 @@ function bindModalEvents() {
 
 function hydrateFromHash() {
   const hash = window.location.hash;
-  if (hash === "#selected") state.selectedId = candidates[0].id;
+  if (hash === "#selected") setSelectedIds([candidates[0].id]);
   if (hash === "#resolve" || hash === "#resolve-name" || hash === "#resolve-a") {
     state.view = "resolve";
-    state.selectedId = candidates[0].id;
+    setSelectedIds([candidates[0].id]);
   }
   if (hash === "#identity" || hash === "#identity-dark" || hash === "#photo" || hash === "#green-card") {
     state.view = "identity";
@@ -1389,7 +1498,7 @@ function hydrateFromHash() {
   if (hash === "#green-card") state.modal = "green-card";
   if (hash === "#pending") {
     state.submitted = true;
-    state.selectedId = null;
+    setSelectedIds([]);
     state.toast = "Resolution package sent";
   }
 }
