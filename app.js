@@ -113,6 +113,18 @@ const backgroundRows = [
   { year: "2016", type: "INTERNATIONAL SEARCH", title: "Canada", status: "MATCH", dateLabel: "RESPONSE DATE", date: "October 1, 2016", accent: "red" },
 ];
 
+const timelineIcons = {
+  "PERMANENT RESIDENCE": "assignment_ind",
+  "ASC APPOINTMENT": "groups",
+  "WORK AUTHORIZATION": "work",
+  "AIR ENTRY": "flight_land",
+  "TSA": "admin_panel_settings",
+  "AIR EXIT": "flight_takeoff",
+  "IMMIGRATION COURT": "gavel",
+  "BACKGROUND CHECK": "person_search",
+  "INTERNATIONAL SEARCH": "travel_explore",
+};
+
 function shell(content, options = {}) {
   const crumbs = options.crumbs
     ? `<div class="sub-nav">${options.crumbs
@@ -833,11 +845,14 @@ function backgroundFilters() {
 
 function backgroundRow(row, index) {
   const showYear = index === 0 || backgroundRows[index - 1].year !== row.year;
+  const icon = timelineIcons[row.type] || "article";
   return `
     ${showYear ? `<h3 class="timeline-year">${row.year}</h3>` : ""}
     <article class="timeline-card ${row.expanded ? "expanded" : ""}">
       <div class="timeline-accent ${row.accent}"></div>
-      <div class="timeline-icon">${row.type.includes("AIR") ? "●" : row.type.includes("BACKGROUND") ? "⌕" : "▣"}</div>
+      <div class="timeline-icon" aria-hidden="true">
+        <span class="material-symbols-outlined">${icon}</span>
+      </div>
       <div>
         <div class="label">${row.type}</div>
         <div class="timeline-title">${row.title}</div>
